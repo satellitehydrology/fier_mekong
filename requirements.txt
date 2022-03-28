@@ -4,3 +4,4 @@ xarray
 matplotlib
 netcdf4
 tensorflow
+click >= 8.0.4
