@@ -1,5 +1,8 @@
+click==7.1.2
+streamlit
 streamlit-folium
 xarray
+matplotlib
 netcdf4
 tensorflow
 
