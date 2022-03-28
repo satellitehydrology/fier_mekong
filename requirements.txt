@@ -1,7 +1,5 @@
-streamlit == 1.7.0
 streamlit-folium
 xarray
-matplotlib
 netcdf4
 tensorflow
-click >= 8.0.4
+
