@@ -1,0 +1,6 @@
+streamlit
+streamlit-folium
+xarray
+matplotlib
+netcdf4
+tensorflow
