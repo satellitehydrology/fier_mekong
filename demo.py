@@ -59,6 +59,13 @@ with row1_col2:
     try:
         st.subheader('Water Level Input')
         with st.form("Run FIER"):
+            
+            # -- Streamlit function of getting date input --
+            #doi = st.date_input(
+            #    "Select the date-of-interest:",
+            #    value = datetime.date.today(),
+            #)
+            
             hydrosite = pd.read_csv('AOI/%s/hydrosite.csv'%(str(region)))
             water_level = {}
             for i in range(hydrosite.shape[0]):
