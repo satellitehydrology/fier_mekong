@@ -39,6 +39,7 @@ def synthesize_sar(region, water_level,):
     all_meanVV_dir = '%s/stats_img/500m/all_meanVV.nc'%(region)
     all_meanVV = xr.open_dataset(root_output_folder + all_meanVV_dir)
     all_meanVV = all_meanVV.to_array().values[0,:,:]
+
     syn_sar = syn_sar + all_meanVV
 
     # Z-score
@@ -47,6 +48,7 @@ def synthesize_sar(region, water_level,):
     dry_meanVV_dir = '%s/stats_img/500m/dry_meanVV.nc'%(region)
     dry_meanVV = xr.open_dataset(root_output_folder + dry_meanVV_dir)
     dry_meanVV = dry_meanVV.to_array().values[0,:,:]
+
 
     dry_stdVV_dir = '%s/stats_img/500m/dry_stdVV.nc'%(region)
     dry_stdVV = xr.open_dataset(root_output_folder + dry_stdVV_dir)
@@ -67,6 +69,8 @@ def synthesize_sar(region, water_level,):
     # water_map = z_score_img.copy()
     # water_map[z_score_img < zscore_threshold] = 1
     # water_map[z_score_img >= zscore_threshold] = 0
+
+    RSM.close()
 
     return syn_sar, z_score_img, water_map
 
@@ -115,6 +119,7 @@ def image_output(region, water_level):
         },
         coords = all_meanVV.coords,
     )
+    all_meanVV.close()
     out_file.to_netcdf(folder_name +'/output.nc')
 
     return folder_name
