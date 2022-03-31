@@ -5,4 +5,5 @@ xarray
 matplotlib
 netcdf4
 tensorflow
+openpyxl
 
