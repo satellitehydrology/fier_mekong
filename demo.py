@@ -7,6 +7,7 @@ from syn_sar import *
 import numpy.ma as ma
 import pandas as pd
 import matplotlib.pyplot as plt
+import datetime
 
 
 def colorize(data, cmap='viridis'):
@@ -67,87 +68,81 @@ with row1_col2:
             except:
                 st.write('Region not ready')
 
-    try:
-        st.subheader('Water Level Input')
-        with st.form("Run FIER"):
+    st.subheader('Select Date')
+    with st.form("Run FIER"):
 
-            # -- Streamlit function of getting date input --
-            #doi = st.date_input(
-            #    "Select the date-of-interest:",
-            #    value = datetime.date.today(),
-            #)
+        date = st.date_input(
+             "Select Date:",
+             value = datetime.date(2019, 7, 6),
+             min_value = datetime.date(2008, 1, 1),
+             max_value = datetime.date(2019, 12, 31),
+             )
 
+
+        submitted = st.form_submit_button("Submit")
+
+        if submitted:
             hydrosite = pd.read_csv('AOI/%s/hydrosite.csv'%(str(region)))
             water_level = {}
-            water_level_output = {}
             for i in range(hydrosite.shape[0]):
-                water_level[hydrosite.loc[i,'ID']] = st.number_input("%s Station Water level (m):"%(hydrosite.loc[i,'Name']),
-                format = '%.2f',
-                min_value = float(hydrosite.loc[i,'Minimum(meters)']),
-                max_value = float(hydrosite.loc[i,'Maximum(meters)']),
-                value = (float(hydrosite.loc[i,'Minimum(meters)']) + float(hydrosite.loc[i,'Maximum(meters)']))/2
-                )
-                water_level_output[hydrosite.loc[i,'Name']] = round(water_level[hydrosite.loc[i,'ID']], 2)
+                site = hydrosite.loc[i,'ID']
+                df = pd.read_excel('AOI/%s/water_level/historical/500m/%s.xlsx'%(region, site))
+                d = pd.Timestamp(date)
+                water_level[site] = round(df[df['time'] == d].water_level.values[0], 3)
 
-            submitted = st.form_submit_button("Submit")
 
-            if submitted:
-                try:
-                    location = [12.23, 104.79] # NEED FIX!!!!!!!!!!!
-                    m = folium.Map(
-                        zoom_start = 8,
-                        location = location,
-                        control_scale=True,
-                    )
+            location = [12.23, 104.79] # NEED FIX!!!!!!!!!!!
+            m = folium.Map(
+                zoom_start = 8,
+                location = location,
+                control_scale=True,
+            )
 
-                    image_folder = image_output(region, water_level)
-                    with xr.open_dataset(image_folder +'/output.nc',) as output:
-                        bounds = [[output.lat.values.min(), output.lon.values.min()], [output.lat.values.max(), output.lon.values.max()]]
-                        sar_image, z_score_image, water_map_image = output['Synthesized SAR Image'].values, output['Z-score Image'].values, output['Inundation Map'].values
+            image_folder = image_output(region, water_level)
+            with xr.open_dataset(image_folder +'/output.nc',) as output:
+                bounds = [[output.lat.values.min(), output.lon.values.min()], [output.lat.values.max(), output.lon.values.max()]]
+                sar_image, z_score_image, water_map_image = output['Synthesized SAR Image'].values, output['Z-score Image'].values, output['Inundation Map'].values
 
-                    water_cmap =  matplotlib.colors.ListedColormap(["silver","darkblue"])
-                    water_map_image =  colorize(water_map_image, water_cmap)
+            water_cmap =  matplotlib.colors.ListedColormap(["silver","darkblue"])
+            water_map_image =  colorize(water_map_image, water_cmap)
 
-                    folium.raster_layers.ImageOverlay(
-                        image= image_folder +'/syn_sar.png',
-                        # image = sar_image,
-                        bounds = bounds,
-                        opacity = 0.5,
-                        name = 'Synthesized Sar Image_' + region,
-                        show = False,
-                    ).add_to(m)
+            folium.raster_layers.ImageOverlay(
+                image= image_folder +'/syn_sar.png',
+                # image = sar_image,
+                bounds = bounds,
+                opacity = 0.5,
+                name = 'Synthesized Sar Image_' + region,
+                show = False,
+            ).add_to(m)
 
-                    # Add Z_SCORE
-                    folium.raster_layers.ImageOverlay(
-                        image= image_folder +'/z_score.png',
-                        # image = z_score_image,
-                        bounds = bounds,
-                        opacity = 0.5,
-                        name = 'Z-score Image_' + region ,
-                        show = False
-                    ).add_to(m)
+            # Add Z_SCORE
+            folium.raster_layers.ImageOverlay(
+                image= image_folder +'/z_score.png',
+                # image = z_score_image,
+                bounds = bounds,
+                opacity = 0.5,
+                name = 'Z-score Image_' + region ,
+                show = False
+            ).add_to(m)
 
-                    # Add Inundation
-                    folium.raster_layers.ImageOverlay(
-                        # image= image_folder +'/water_map.png',
-                        image = water_map_image,
-                        bounds = bounds,
-                        opacity = 0.5,
-                        name = 'Inundation Map_' + region ,
-                        show = True
-                    ).add_to(m)
+            # Add Inundation
+            folium.raster_layers.ImageOverlay(
+                # image= image_folder +'/water_map.png',
+                image = water_map_image,
+                bounds = bounds,
+                opacity = 0.5,
+                name = 'Inundation Map_' + region ,
+                show = True
+            ).add_to(m)
 
-                    plugins.Fullscreen(position='topright').add_to(m)
-                    folium.TileLayer('Stamen Terrain').add_to(m)
-                    m.add_child(folium.LatLngPopup())
-                    folium.LayerControl().add_to(m)
-                    st.write('Region:\n', region)
-                    st.write('Water level (m):\n', water_level_output)
+            plugins.Fullscreen(position='topright').add_to(m)
+            folium.TileLayer('Stamen Terrain').add_to(m)
+            m.add_child(folium.LatLngPopup())
+            folium.LayerControl().add_to(m)
+            st.write('Region:\n', region)
+            st.write('Date: \n', date)
 
-                except Exception as e:
-                    st.write(e)
-    except:
-        pass
+
 
 
 
