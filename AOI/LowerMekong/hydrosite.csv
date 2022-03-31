@@ -1,5 +1,5 @@
-﻿ID,Name,Minimum(meters),Maximum(meters)
-VN-039801,Chau Doc,0.1,3.6
-KH-033402,Koh Khel,1.3,7.8
-VN-039803,Can Tho,0.1,1.5
-KH-014901,Kratie,7.2,22.7
+﻿ID,Name,Lat,Long
+VN-039801,Chau Doc,10.705,105.134
+KH-033402,Koh Khel,11.24,105.04
+VN-039803,Can Tho,10.027,105.769
+KH-014901,Kratie,12.481,106.018
