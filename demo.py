@@ -73,7 +73,7 @@ with row1_col2:
 
         date = st.date_input(
              "Select Date:",
-             value = datetime.date(2019, 7, 6),
+             value = datetime.date(2019, 1, 1),
              min_value = datetime.date(2008, 1, 1),
              max_value = datetime.date(2019, 12, 31),
              )
