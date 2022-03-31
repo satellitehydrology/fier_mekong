@@ -53,7 +53,7 @@ with row1_col2:
             try:
                 location = [12.23, 104.79] # NEED FIX!!!!!!!!!!!
                 m = folium.Map(
-                    zoom_start = 8,
+                    zoom_start = 7,
                     location = location,
                     control_scale=True,
                 )
@@ -63,8 +63,15 @@ with row1_col2:
                 folium.LayerControl().add_to(m)
 
                 hydrosite = pd.read_csv('AOI/%s/hydrosite.csv'%(str(region)))
+                hydrosite = hydrosite.sort_values(by='Lat', ascending=False)
                 st.write('Water Level Gauge')
                 st.dataframe(hydrosite)
+
+                for i in range(0,len(hydrosite)):
+                   folium.Marker(
+                      location=[hydrosite.iloc[i]['Lat'], hydrosite.iloc[i]['Long']],
+                      popup=hydrosite.iloc[i]['Name'],
+                   ).add_to(m)
             except:
                 st.write('Region not ready')
 
@@ -73,7 +80,7 @@ with row1_col2:
 
         date = st.date_input(
              "Select Date:",
-             value = datetime.date(2019, 1, 1),
+             value = datetime.date(2018, 10, 17),
              min_value = datetime.date(2008, 1, 1),
              max_value = datetime.date(2019, 12, 31),
              )
@@ -93,7 +100,7 @@ with row1_col2:
 
             location = [12.23, 104.79] # NEED FIX!!!!!!!!!!!
             m = folium.Map(
-                zoom_start = 8,
+                zoom_start = 7,
                 location = location,
                 control_scale=True,
             )
@@ -148,8 +155,10 @@ with row1_col2:
 
 
 with row1_col1:
-    folium_static(m, height = 600, width = 800)
+    folium_static(m, height = 600, width = 900)
     st.write('Disclaimer: This is a test version of FIER method for Mekong Region')
     url = "https://www.sciencedirect.com/science/article/pii/S0034425720301024?casa_token=kOYlVMMWkBUAAAAA:fiFM4l6BUzJ8xTCksYUe7X4CcojddbO8ybzOSMe36f2cFWEXDa_aFHaGeEFlN8SuPGnDy7Ir8w"
     st.write("Reference: [Chang, C. H., Lee, H., Kim, D., Hwang, E., Hossain, F., Chishtie, F., ... & Basnayake, S. (2020). Hindcast and forecast of daily inundation extents using satellite SAR and altimetry data with rotated empirical orthogonal function analysis: Case study in Tonle Sap Lake Floodplain. Remote Sensing of Environment, 241, 111732.](%s)" % url)
-    st.write("This app has been developed by Chi-Hung Chang  & Son Do at University of Houston with supports from NASA SERVIR and GEOGloWS.")
+    st.write("""This app has been developed by Chi-Hung Chang  & Son Do at University of Houston with supports from NASA SERVIR and GEOGloWS.
+    Kel Markert at SERVIR Coordination Office is also acknowledged for the development of this FIER-Mekong App.
+    """)
