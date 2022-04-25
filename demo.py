@@ -284,8 +284,8 @@ with row1_col2:
         except:
             pass
 
-    first = Image.open("logo/first.png")
-    second = Image.open("logo/second_row.png")
+    first = Image.open("logo/first.PNG")
+    second = Image.open("logo/second_row.PNG")
     st.image([first], width=500,)
     st.image([second], width=300,)
 
