@@ -8,6 +8,7 @@ import numpy.ma as ma
 import pandas as pd
 import matplotlib.pyplot as plt
 import datetime
+from PIL import Image
 
 def sheet_out(url):
     return url.replace("/edit#gid=", "/export?format=csv&gid=")
@@ -253,3 +254,11 @@ with row1_col1:
     st.write("Reference: [Chang, C. H., Lee, H., Kim, D., Hwang, E., Hossain, F., Chishtie, F., ... & Basnayake, S. (2020). Hindcast and forecast of daily inundation extents using satellite SAR and altimetry data with rotated empirical orthogonal function analysis: Case study in Tonle Sap Lake Floodplain. Remote Sensing of Environment, 241, 111732.](%s)" % url)
     st.write("This app has been developed by Chi-Hung Chang  & Son Do at University of Houston with supports from NASA SERVIR and GEOGloWS.")
     st.write("Kel Markert at SERVIR Coordination Office is also acknowledged for the development of this FIER-Mekong App.")
+
+    uh = Image.open("logo/uh_logo_2.PNG")
+    uw = Image.open("logo/uwashington.png")
+    servir = Image.open("logo/servirmekong.png")
+    nasa = Image.open("logo/nasa.png")
+    geoglows = Image.open("logo/geoglows.jpg")
+    st.image([uh, uw, servir, nasa,], width=150,)
+    st.image([geoglows], width=200,)
