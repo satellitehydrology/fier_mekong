@@ -6,6 +6,6 @@ matplotlib
 netcdf4
 tensorflow
 openpyxl
-gdal
+--find-links=https://girder.github.io/large_image_wheels GDAL
 rioxarray
 
