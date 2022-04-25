@@ -6,5 +6,6 @@ matplotlib
 netcdf4
 tensorflow
 openpyxl
+gdal
 rioxarray
 
