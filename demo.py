@@ -161,6 +161,24 @@ with row1_col2:
                 st.write('Region:\n', region)
                 st.write('Date: \n', date)
 
+        try:
+            nc_file = xr.open_dataset('output/output.nc')
+            innudation_map = nc_file['Inundation Map']
+            innudation_map = innudation_map.rio.set_spatial_dims('lon', 'lat')
+            innudation_map.rio.set_crs("epsg:4326")
+            innudation_map.rio.to_raster("output/output.tiff")
+            nc_file.close()
+
+            with open("output/output.tiff", 'rb') as f:
+                st.download_button('Download Latest Run Output (.tiff)',
+                f,
+                file_name = "output.tiff",
+                mime= "image/geotiff")
+
+
+        except:
+            pass
+
     else:
         with st.form("Run Forecast FIER"):
             sheet_link = pd.read_csv('AOI/%s/wl_sheet.txt'%(str(region)), sep = '\t')
@@ -248,23 +266,23 @@ with row1_col2:
                 st.write('Region:\n', region)
                 st.write('Date: \n', date)
 
-    try:
-        nc_file = xr.open_dataset('output/output.nc')
-        innudation_map = nc_file['Inundation Map']
-        innudation_map = innudation_map.rio.set_spatial_dims('lon', 'lat')
-        innudation_map.rio.set_crs("epsg:4326")
-        innudation_map.rio.to_raster("output/output.tiff")
-        nc_file.close()
+        try:
+            nc_file = xr.open_dataset('output/output.nc')
+            innudation_map = nc_file['Inundation Map']
+            innudation_map = innudation_map.rio.set_spatial_dims('lon', 'lat')
+            innudation_map.rio.set_crs("epsg:4326")
+            innudation_map.rio.to_raster("output/output.tiff")
+            nc_file.close()
 
-        with open("output/output.tiff", 'rb') as f:
-            st.download_button('Download Latest Run Output (.tiff)',
-            f,
-            file_name = "output.tiff",
-            mime= "image/geotiff")
+            with open("output/output.tiff", 'rb') as f:
+                st.download_button('Download Latest Run Output (.tiff)',
+                f,
+                file_name = "output.tiff",
+                mime= "image/geotiff")
 
 
-    except:
-        pass
+        except:
+            pass
 
 
 
