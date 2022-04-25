@@ -9,6 +9,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import datetime
 from PIL import Image
+import rioxarray as rio
 
 def sheet_out(url):
     return url.replace("/edit#gid=", "/export?format=csv&gid=")
@@ -245,6 +246,7 @@ with row1_col2:
 
                 st.write('Region:\n', region)
                 st.write('Date: \n', date)
+
 
 
 with row1_col1:
