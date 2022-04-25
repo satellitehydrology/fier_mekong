@@ -9,7 +9,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import datetime
 from PIL import Image
-from osgeo import gdal
+# from osgeo import gdal
 import rioxarray as rio
 
 def sheet_out(url):
