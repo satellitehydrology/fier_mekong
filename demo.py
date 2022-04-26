@@ -286,8 +286,8 @@ with row1_col2:
 
     first = Image.open("logo/first.PNG")
     second = Image.open("logo/second_row.PNG")
-    st.image([first], width=500,)
-    st.image([second], width=300,)
+    st.image([first], width=450,)
+    st.image([second], width=350,)
 
 
 with row1_col1:
