@@ -79,16 +79,16 @@ def image_output(region, water_level):
     folder_name = 'output'
     sar_image, z_score_image, water_map_image = synthesize_sar(region, water_level)
 
-    fig = plt.figure()
-    plt.imshow(sar_image, cmap='gray')
-    plt.axis('off')
-    plt.savefig(folder_name +'/syn_sar.png', bbox_inches='tight', dpi=300, pad_inches = 0)
-    plt.close()
-
-    fig = plt.imshow(z_score_image, cmap='jet', vmin=-3, vmax=3, interpolation='None')
-    plt.axis('off')
-    plt.savefig(folder_name +'/z_score.png', bbox_inches='tight', dpi=300, pad_inches = 0)
-    plt.close()
+    # fig = plt.figure()
+    # plt.imshow(sar_image, cmap='gray')
+    # plt.axis('off')
+    # plt.savefig(folder_name +'/syn_sar.png', bbox_inches='tight', dpi=300, pad_inches = 0)
+    # plt.close()
+    #
+    # fig = plt.imshow(z_score_image, cmap='jet', vmin=-3, vmax=3, interpolation='None')
+    # plt.axis('off')
+    # plt.savefig(folder_name +'/z_score.png', bbox_inches='tight', dpi=300, pad_inches = 0)
+    # plt.close()
 
     water_cmap =  matplotlib.colors.ListedColormap(["silver","darkblue"])
     # water_cmap.set_bad('w', 0.001)
@@ -121,5 +121,12 @@ def image_output(region, water_level):
     )
     all_meanVV.close()
     out_file.to_netcdf(folder_name +'/output.nc')
+    
+    nc_file = xr.open_dataset('output/output.nc')
+    innudation_map = nc_file['Inundation Map']
+    innudation_map = innudation_map.rio.set_spatial_dims('lon', 'lat')
+    innudation_map.rio.set_crs("epsg:4326")
+    innudation_map.rio.to_raster("output/output.tiff")
+    nc_file.close()
 
     return folder_name

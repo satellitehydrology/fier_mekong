@@ -24,25 +24,49 @@ def colorize(data, cmap='viridis'):
 # Page Configuration
 st.set_page_config(layout="wide")
 
+if 'AOI_str' not in st.session_state:
+    st.session_state.AOI_str = None
+
+basemaps = {
+    'Google Maps': folium.TileLayer(
+        tiles = 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+        attr = 'Google',
+        name = 'Google Maps',
+    ),
+    'Google Satellite': folium.TileLayer(
+        tiles = 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+        attr = 'Google',
+        name = 'Google Satellite',
+    ),
+    'Google Terrain': folium.TileLayer(
+        tiles = 'https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}',
+        attr = 'Google',
+        name = 'Google Terrain',
+    ),
+    'Google Satellite Hybrid': folium.TileLayer(
+        tiles = 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+        attr = 'Google',
+        name = 'Google Satellite Hybrid',
+    ),
+}
+
 # Title and Description
 st.title("Forecasting Inundation Extents using REOF Analysis (FIER)-Mekong")
-
 
 row1_col1, row1_col2 = st.columns([2, 1])
 # Set up Geemap
 with row1_col1:
     m = folium.Map(
-        zoom_start=5,
+        zoom_start= 5,
         location =(12.02 , 104.81),
         control_scale=True,
+        tiles=None
     )
     plugins.Fullscreen(position='topright').add_to(m)
-    folium.TileLayer('Stamen Terrain').add_to(m)
+    basemaps['Google Terrain'].add_to(m)
+    basemaps['Google Satellite Hybrid'].add_to(m)
     m.add_child(folium.LatLngPopup())
     folium.LayerControl().add_to(m)
-
-
-
 
 with row1_col2:
     # Form
@@ -51,25 +75,27 @@ with row1_col2:
 
         region = st.selectbox(
      'Determine region:',
-     ('LowerMekong','New Region' ),
+     ('LowerMekong',),
      )
 
 
         submitted = st.form_submit_button("Submit")
 
         if submitted:
+            st.session_state.AOI_str = region
             try:
                 location = [12.23, 104.79] # NEED FIX!!!!!!!!!!!
                 m = folium.Map(
                     zoom_start = 7,
                     location = location,
                     control_scale=True,
+                    tiles = None
                 )
-                plugins.Fullscreen(position='topright').add_to(m)
-                folium.TileLayer('Stamen Terrain').add_to(m)
-                m.add_child(folium.LatLngPopup())
-                folium.LayerControl().add_to(m)
 
+                basemaps['Google Terrain'].add_to(m)
+                basemaps['Google Satellite Hybrid'].add_to(m)
+                plugins.Fullscreen(position='topright').add_to(m)
+                m.add_child(folium.LatLngPopup())
                 folium.LayerControl().add_to(m)
 
                 hydrosite = pd.read_csv('AOI/%s/hydrosite.csv'%(str(region)))
@@ -86,203 +112,188 @@ with row1_col2:
             except:
                 st.write('Region not ready')
 
-    st.subheader('Select Date')
-    run_type = st.radio('Run type:', ('Hindcast', 'Forecast'))
-    if run_type == 'Hindcast':
-        with st.form("Run Hindcasted FIER"):
-            date = st.date_input(
-                 "Select Hindcasted Date (2008-01-01 to 2019-12-31):",
-                 value = datetime.date(2018, 10, 17),
-                 min_value = datetime.date(2008, 1, 1),
-                 max_value = datetime.date(2019, 12, 31),
-                 )
+    if st.session_state.AOI_str != None:
+        st.subheader('Select Date')
+        run_type = st.radio('Run type:', ('Hindcast', 'Forecast'))
+        curr_region = st.session_state.AOI_str
 
+        if run_type == 'Hindcast':
+            with st.form("Run Hindcasted FIER"):
+                date = st.date_input(
+                     "Select Hindcasted Date (2008-01-01 to 2019-12-31):",
+                     value = datetime.date(2018, 10, 17),
+                     min_value = datetime.date(2008, 1, 1),
+                     max_value = datetime.date(2019, 12, 31),
+                     )
+                submitted = st.form_submit_button("Submit")
+                if submitted:
+                    hydrosite = pd.read_csv('AOI/%s/hydrosite.csv'%(str(curr_region)))
+                    water_level = {}
+                    for i in range(hydrosite.shape[0]):
+                        site = hydrosite.loc[i,'ID']
+                        df = pd.read_excel('AOI/%s/water_level/historical/500m/%s.xlsx'%(curr_region, site))
+                        d = pd.Timestamp(date)
+                        water_level[site] = round(df[df['time'] == d].water_level.values[0], 3)
 
-            submitted = st.form_submit_button("Submit")
+                    location = [12.23, 104.79] # NEED FIX!!!!!!!!!!!
+                    m = folium.Map(
+                        zoom_start = 7,
+                        location = location,
+                        control_scale=True,
+                        tiles = None,
+                    )
 
-            if submitted:
-                hydrosite = pd.read_csv('AOI/%s/hydrosite.csv'%(str(region)))
-                water_level = {}
-                for i in range(hydrosite.shape[0]):
-                    site = hydrosite.loc[i,'ID']
-                    df = pd.read_excel('AOI/%s/water_level/historical/500m/%s.xlsx'%(region, site))
-                    d = pd.Timestamp(date)
-                    water_level[site] = round(df[df['time'] == d].water_level.values[0], 3)
+                    image_folder = image_output(curr_region, water_level)
+                    with xr.open_dataset(image_folder +'/output.nc',) as output:
+                        bounds = [[output.lat.values.min(), output.lon.values.min()], [output.lat.values.max(), output.lon.values.max()]]
+                        sar_image, z_score_image, water_map_image = output['Synthesized SAR Image'].values, output['Z-score Image'].values, output['Inundation Map'].values
 
+                    water_cmap =  matplotlib.colors.ListedColormap(["silver","darkblue"])
+                    water_map_image =  colorize(water_map_image, water_cmap)
 
-                location = [12.23, 104.79] # NEED FIX!!!!!!!!!!!
-                m = folium.Map(
-                    zoom_start = 7,
-                    location = location,
-                    control_scale=True,
-                )
+                    # folium.raster_layers.ImageOverlay(
+                    #     image= image_folder +'/syn_sar.png',
+                    #     # image = sar_image,
+                    #     bounds = bounds,
+                    #     opacity = 0.5,
+                    #     name = 'Synthesized Sar Image_' + curr_region,
+                    #     show = False,
+                    # ).add_to(m)
+                    #
+                    # # Add Z_SCORE
+                    # folium.raster_layers.ImageOverlay(
+                    #     image= image_folder +'/z_score.png',
+                    #     # image = z_score_image,
+                    #     bounds = bounds,
+                    #     opacity = 0.5,
+                    #     name = 'Z-score Image_' + curr_region ,
+                    #     show = False
+                    # ).add_to(m)
 
-                image_folder = image_output(region, water_level)
-                with xr.open_dataset(image_folder +'/output.nc',) as output:
-                    bounds = [[output.lat.values.min(), output.lon.values.min()], [output.lat.values.max(), output.lon.values.max()]]
-                    sar_image, z_score_image, water_map_image = output['Synthesized SAR Image'].values, output['Z-score Image'].values, output['Inundation Map'].values
+                    # Add Inundation
+                    folium.raster_layers.ImageOverlay(
+                        # image= image_folder +'/water_map.png',
+                        image = water_map_image,
+                        bounds = bounds,
+                        opacity = 0.5,
+                        name = 'Inundation Map_' + curr_region ,
+                        show = True
+                    ).add_to(m)
 
-                water_cmap =  matplotlib.colors.ListedColormap(["silver","darkblue"])
-                water_map_image =  colorize(water_map_image, water_cmap)
+                    plugins.Fullscreen(position='topright').add_to(m)
+                    basemaps['Google Terrain'].add_to(m)
+                    basemaps['Google Satellite Hybrid'].add_to(m)
+                    m.add_child(folium.LatLngPopup())
+                    folium.LayerControl().add_to(m)
+                    st.write('Region:\n', curr_region)
+                    st.write('Date: \n', date)
 
-                folium.raster_layers.ImageOverlay(
-                    image= image_folder +'/syn_sar.png',
-                    # image = sar_image,
-                    bounds = bounds,
-                    opacity = 0.5,
-                    name = 'Synthesized Sar Image_' + region,
-                    show = False,
-                ).add_to(m)
+            try:
+                with open("output/output.tiff", 'rb') as f:
+                    st.download_button('Download Latest Run Output (.tiff)',
+                    f,
+                    file_name = "output.tiff",
+                    mime= "image/geotiff")
+            except:
+                pass
 
-                # Add Z_SCORE
-                folium.raster_layers.ImageOverlay(
-                    image= image_folder +'/z_score.png',
-                    # image = z_score_image,
-                    bounds = bounds,
-                    opacity = 0.5,
-                    name = 'Z-score Image_' + region ,
-                    show = False
-                ).add_to(m)
+        else:
+            with st.form("Run Forecast FIER"):
+                sheet_link = pd.read_csv('AOI/%s/wl_sheet.txt'%(str(curr_region)), sep = '\t')
+                forecast_wl = {}
+                for i in range(sheet_link.shape[0]):
+                    station = pd.read_csv(sheet_out(sheet_link.iloc[i,1]))
+                    station.iloc[:,0] = pd.to_datetime(station.iloc[:,0])
+                    forecast_wl[sheet_link.iloc[i,0]] = station
 
-                # Add Inundation
-                folium.raster_layers.ImageOverlay(
-                    # image= image_folder +'/water_map.png',
-                    image = water_map_image,
-                    bounds = bounds,
-                    opacity = 0.5,
-                    name = 'Inundation Map_' + region ,
-                    show = True
-                ).add_to(m)
+                test = forecast_wl[sheet_link.iloc[0,0]]
+                min_date = test.iloc[0,0]
+                max_date = test.iloc[-1,0]
 
-                plugins.Fullscreen(position='topright').add_to(m)
-                folium.TileLayer('Stamen Terrain').add_to(m)
-                m.add_child(folium.LatLngPopup())
-                folium.LayerControl().add_to(m)
-                st.write('Region:\n', region)
-                st.write('Date: \n', date)
-
-        try:
-            nc_file = xr.open_dataset('output/output.nc')
-            innudation_map = nc_file['Inundation Map']
-            innudation_map = innudation_map.rio.set_spatial_dims('lon', 'lat')
-            innudation_map.rio.set_crs("epsg:4326")
-            innudation_map.rio.to_raster("output/output.tiff")
-            nc_file.close()
-
-            with open("output/output.tiff", 'rb') as f:
-                st.download_button('Download Latest Run Output (.tiff)',
-                f,
-                file_name = "output.tiff",
-                mime= "image/geotiff")
-
-
-        except:
-            pass
-
-    else:
-        with st.form("Run Forecast FIER"):
-            sheet_link = pd.read_csv('AOI/%s/wl_sheet.txt'%(str(region)), sep = '\t')
-            forecast_wl = {}
-            for i in range(sheet_link.shape[0]):
-                station = pd.read_csv(sheet_out(sheet_link.iloc[i,1]))
-                station.iloc[:,0] = pd.to_datetime(station.iloc[:,0])
-                forecast_wl[sheet_link.iloc[i,0]] = station
-
-            test = forecast_wl[sheet_link.iloc[0,0]]
-            min_date = test.iloc[0,0]
-            max_date = test.iloc[-1,0]
-
-            date = st.date_input(
-                 "Select Forecasted Date (%s to %s):"%(min_date.strftime("%Y/%m/%d"), max_date.strftime("%Y/%m/%d")),
-                 value = min_date,
-                 min_value = min_date,
-                 max_value = max_date,
-                 )
+                date = st.date_input(
+                     "Select Forecasted Date (%s to %s):"%(min_date.strftime("%Y/%m/%d"), max_date.strftime("%Y/%m/%d")),
+                     value = min_date,
+                     min_value = min_date,
+                     max_value = max_date,
+                     )
 
 
 
 
-            submitted = st.form_submit_button("Submit")
+                submitted = st.form_submit_button("Submit")
 
-            if submitted:
+                if submitted:
 
-                hydrosite = pd.read_csv('AOI/%s/hydrosite.csv'%(str(region)))
-                water_level = {}
-                for i in range(hydrosite.shape[0]):
-                    site = hydrosite.loc[i,'ID']
-                    df = forecast_wl[site]
-                    d = pd.Timestamp(date)
-                    water_level[site] = round(df[df['time'] == d].water_level.values[0], 3)
+                    hydrosite = pd.read_csv('AOI/%s/hydrosite.csv'%(str(curr_region)))
+                    water_level = {}
+                    for i in range(hydrosite.shape[0]):
+                        site = hydrosite.loc[i,'ID']
+                        df = forecast_wl[site]
+                        d = pd.Timestamp(date)
+                        water_level[site] = round(df[df['time'] == d].water_level.values[0], 3)
 
-                location = [12.23, 104.79] # NEED FIX!!!!!!!!!!!
-                m = folium.Map(
-                    zoom_start = 7,
-                    location = location,
-                    control_scale=True,
-                )
+                    location = [12.23, 104.79] # NEED FIX!!!!!!!!!!!
+                    m = folium.Map(
+                        zoom_start = 7,
+                        location = location,
+                        control_scale=True,
+                        tiles = None
+                    )
 
-                image_folder = image_output(region, water_level)
-                with xr.open_dataset(image_folder +'/output.nc',) as output:
-                    bounds = [[output.lat.values.min(), output.lon.values.min()], [output.lat.values.max(), output.lon.values.max()]]
-                    sar_image, z_score_image, water_map_image = output['Synthesized SAR Image'].values, output['Z-score Image'].values, output['Inundation Map'].values
+                    image_folder = image_output(curr_region, water_level)
+                    with xr.open_dataset(image_folder +'/output.nc',) as output:
+                        bounds = [[output.lat.values.min(), output.lon.values.min()], [output.lat.values.max(), output.lon.values.max()]]
+                        sar_image, z_score_image, water_map_image = output['Synthesized SAR Image'].values, output['Z-score Image'].values, output['Inundation Map'].values
 
-                water_cmap =  matplotlib.colors.ListedColormap(["silver","darkblue"])
-                water_map_image =  colorize(water_map_image, water_cmap)
+                    water_cmap =  matplotlib.colors.ListedColormap(["silver","darkblue"])
+                    water_map_image =  colorize(water_map_image, water_cmap)
 
-                folium.raster_layers.ImageOverlay(
-                    image= image_folder +'/syn_sar.png',
-                    # image = sar_image,
-                    bounds = bounds,
-                    opacity = 0.5,
-                    name = 'Synthesized Sar Image_' + region,
-                    show = False,
-                ).add_to(m)
+                    # folium.raster_layers.ImageOverlay(
+                    #     image= image_folder +'/syn_sar.png',
+                    #     # image = sar_image,
+                    #     bounds = bounds,
+                    #     opacity = 0.5,
+                    #     name = 'Synthesized Sar Image_' + curr_region,
+                    #     show = False,
+                    # ).add_to(m)
+                    #
+                    # # Add Z_SCORE
+                    # folium.raster_layers.ImageOverlay(
+                    #     image= image_folder +'/z_score.png',
+                    #     # image = z_score_image,
+                    #     bounds = bounds,
+                    #     opacity = 0.5,
+                    #     name = 'Z-score Image_' + curr_region ,
+                    #     show = False
+                    # ).add_to(m)
 
-                # Add Z_SCORE
-                folium.raster_layers.ImageOverlay(
-                    image= image_folder +'/z_score.png',
-                    # image = z_score_image,
-                    bounds = bounds,
-                    opacity = 0.5,
-                    name = 'Z-score Image_' + region ,
-                    show = False
-                ).add_to(m)
+                    # Add Inundation
+                    folium.raster_layers.ImageOverlay(
+                        # image= image_folder +'/water_map.png',
+                        image = water_map_image,
+                        bounds = bounds,
+                        opacity = 0.5,
+                        name = 'Inundation Map_' + curr_region ,
+                        show = True
+                    ).add_to(m)
 
-                # Add Inundation
-                folium.raster_layers.ImageOverlay(
-                    # image= image_folder +'/water_map.png',
-                    image = water_map_image,
-                    bounds = bounds,
-                    opacity = 0.5,
-                    name = 'Inundation Map_' + region ,
-                    show = True
-                ).add_to(m)
+                    plugins.Fullscreen(position='topright').add_to(m)
+                    basemaps['Google Terrain'].add_to(m)
+                    basemaps['Google Satellite Hybrid'].add_to(m)
+                    m.add_child(folium.LatLngPopup())
+                    folium.LayerControl().add_to(m)
 
-                plugins.Fullscreen(position='topright').add_to(m)
-                folium.TileLayer('Stamen Terrain').add_to(m)
-                m.add_child(folium.LatLngPopup())
-                folium.LayerControl().add_to(m)
+                    st.write('Region:\n', curr_region)
+                    st.write('Date: \n', date)
 
-                st.write('Region:\n', region)
-                st.write('Date: \n', date)
-
-        try:
-            nc_file = xr.open_dataset('output/output.nc')
-            innudation_map = nc_file['Inundation Map']
-            innudation_map = innudation_map.rio.set_spatial_dims('lon', 'lat')
-            innudation_map.rio.set_crs("epsg:4326")
-            innudation_map.rio.to_raster("output/output.tiff")
-            nc_file.close()
-
-            with open("output/output.tiff", 'rb') as f:
-                st.download_button('Download Latest Run Output (.tiff)',
-                f,
-                file_name = "output.tiff",
-                mime= "image/geotiff")
-
-
-        except:
-            pass
+            try:
+                with open("output/output.tiff", 'rb') as f:
+                    st.download_button('Download Latest Run Output (.tiff)',
+                    f,
+                    file_name = "output.tiff",
+                    mime= "image/geotiff")
+            except:
+                pass
 
     first = Image.open("logo/first.PNG")
     second = Image.open("logo/second_row.PNG")
