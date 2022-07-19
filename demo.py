@@ -56,17 +56,42 @@ st.title("Forecasting Inundation Extents using REOF Analysis (FIER)-Mekong")
 row1_col1, row1_col2 = st.columns([2, 1])
 # Set up Geemap
 with row1_col1:
-    m = folium.Map(
-        zoom_start= 5,
-        location =(12.02 , 104.81),
-        control_scale=True,
-        tiles=None
-    )
-    plugins.Fullscreen(position='topright').add_to(m)
-    basemaps['Google Terrain'].add_to(m)
-    basemaps['Google Satellite Hybrid'].add_to(m)
-    m.add_child(folium.LatLngPopup())
-    folium.LayerControl().add_to(m)
+    if st.session_state.AOI_str == None:
+        m = folium.Map(
+            zoom_start= 5,
+            location =(12.02 , 104.81),
+            control_scale=True,
+            tiles=None
+        )
+        plugins.Fullscreen(position='topright').add_to(m)
+        basemaps['Google Terrain'].add_to(m)
+        basemaps['Google Satellite Hybrid'].add_to(m)
+        m.add_child(folium.LatLngPopup())
+        folium.LayerControl().add_to(m)
+    else:
+        curr_region = st.session_state.AOI_str
+        location = [12.23, 104.79] # NEED FIX!!!!!!!!!!!
+        m = folium.Map(
+            zoom_start = 7,
+            location = location,
+            control_scale=True,
+            tiles = None
+        )
+
+        basemaps['Google Terrain'].add_to(m)
+        basemaps['Google Satellite Hybrid'].add_to(m)
+        plugins.Fullscreen(position='topright').add_to(m)
+        m.add_child(folium.LatLngPopup())
+        folium.LayerControl().add_to(m)
+
+        hydrosite = pd.read_csv('AOI/%s/hydrosite.csv'%(str(curr_region)))
+        hydrosite = hydrosite.sort_values(by='Lat', ascending=False)
+
+        for i in range(0,len(hydrosite)):
+           folium.Marker(
+              location=[hydrosite.iloc[i]['Lat'], hydrosite.iloc[i]['Long']],
+              popup=hydrosite.iloc[i]['Name'],
+           ).add_to(m)
 
 with row1_col2:
     # Form
@@ -83,39 +108,38 @@ with row1_col2:
 
         if submitted:
             st.session_state.AOI_str = region
-            try:
-                location = [12.23, 104.79] # NEED FIX!!!!!!!!!!!
-                m = folium.Map(
-                    zoom_start = 7,
-                    location = location,
-                    control_scale=True,
-                    tiles = None
-                )
+            curr_region = st.session_state.AOI_str
+            location = [12.23, 104.79] # NEED FIX!!!!!!!!!!!
+            m = folium.Map(
+                zoom_start = 7,
+                location = location,
+                control_scale=True,
+                tiles = None
+            )
 
-                basemaps['Google Terrain'].add_to(m)
-                basemaps['Google Satellite Hybrid'].add_to(m)
-                plugins.Fullscreen(position='topright').add_to(m)
-                m.add_child(folium.LatLngPopup())
-                folium.LayerControl().add_to(m)
+            basemaps['Google Terrain'].add_to(m)
+            basemaps['Google Satellite Hybrid'].add_to(m)
+            plugins.Fullscreen(position='topright').add_to(m)
+            m.add_child(folium.LatLngPopup())
+            folium.LayerControl().add_to(m)
 
-                hydrosite = pd.read_csv('AOI/%s/hydrosite.csv'%(str(region)))
-                hydrosite = hydrosite.sort_values(by='Lat', ascending=False)
-                st.write('Water Level Gauge')
-                st.dataframe(hydrosite)
+            hydrosite = pd.read_csv('AOI/%s/hydrosite.csv'%(str(curr_region)))
+            hydrosite = hydrosite.sort_values(by='Lat', ascending=False)
+            st.write('Water Level Gauge')
+            st.dataframe(hydrosite)
 
-                for i in range(0,len(hydrosite)):
-                   folium.Marker(
-                      location=[hydrosite.iloc[i]['Lat'], hydrosite.iloc[i]['Long']],
-                      popup=hydrosite.iloc[i]['Name'],
-                   ).add_to(m)
-
-            except:
-                st.write('Region not ready')
+            for i in range(0,len(hydrosite)):
+               folium.Marker(
+                  location=[hydrosite.iloc[i]['Lat'], hydrosite.iloc[i]['Long']],
+                  popup=hydrosite.iloc[i]['Name'],
+               ).add_to(m)
 
     if st.session_state.AOI_str != None:
         st.subheader('Select Date')
+        st.markdown('**AOI: %s**'%(curr_region))
         run_type = st.radio('Run type:', ('Hindcast', 'Forecast'))
         curr_region = st.session_state.AOI_str
+
 
         if run_type == 'Hindcast':
             with st.form("Run Hindcasted FIER"):
