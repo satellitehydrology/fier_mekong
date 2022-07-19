@@ -7,4 +7,5 @@ netcdf4
 tensorflow
 openpyxl
 rioxarray
-
+--find-links=https://girder.github.io/large_image_wheels GDAL
+geemap
