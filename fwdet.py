@@ -88,83 +88,86 @@ def generate_depth(flood_raster):
     return costDepthFilter
 
 # Page Configuration
-st.set_page_config(layout="wide")
+# st.set_page_config(layout="wide")
 # Title and Description
-st.title("Generate Flood Depth using Floodwater Depth Estimation Tool (FwDET)")
+def app():
+    st.title("Generate Flood Depth using Floodwater Depth Estimation Tool (FwDET)")
 
-row1_col1, row1_col2 = st.columns([2, 1])
+    row1_col1, row1_col2 = st.columns([2, 1])
 
-# Set up Geemap
-with row1_col1:
-    m = geemap.Map(
-    zoom=5,
-    center=(12.02 , 104.81),
-    )
-    m.addLayerControl()
-
-
-with row1_col2:
-    # Form
-    st.subheader('Flood Innudation Raster Input')
-    with st.form('Input'):
-        title = st.text_input('Insert Earth Engine Asset Directory of Innudation Raster:', 'users/sondo/output_test')
-        st.markdown('_Example: users/sondo/output_test_')
-        depth = st.checkbox('Flood Depth Estimation')
-        submitted = st.form_submit_button("Submit")
-
-        if submitted:
-            flood = ee.Image(title)
-            flood = flood.updateMask(flood.gte(1));
-
-            m = geemap.Map(
-            zoom=5,
-            center=(12.02 , 104.81),
-            basemap = None,
-            tiles = None
-            )
-            m.centerObject(flood, 8)
+    # Set up Geemap
+    with row1_col1:
+        m = geemap.Map(
+        zoom=5,
+        center=(12.02 , 104.81),
+        )
+        m.addLayerControl()
 
 
-            flood_params = {'min': 0,
-            'max': 1,
-            'palette': ['red','#000072']}
+    with row1_col2:
+        # Form
+        st.subheader('Flood Innudation Raster Input')
+        with st.form('Input'):
+            title = st.text_input('Insert Earth Engine Asset Directory of Innudation Raster:', 'users/sondo/output_test')
+            st.markdown('_Example: users/sondo/output_test_')
+            depth = st.checkbox('Flood Depth Estimation')
+            submitted = st.form_submit_button("Submit")
+
+            if submitted:
+                flood = ee.Image(title)
+                flood = flood.updateMask(flood.gte(1));
+
+                m = geemap.Map(
+                zoom=5,
+                center=(12.02 , 104.81),
+                basemap = None,
+                tiles = None
+                )
+                m.centerObject(flood, 8)
 
 
-            depth_params = {'min': 1,
-            'max': 4,
-            'palette': ['#FEF001','#FD9A01','#FD6104','#F00505']}
-            if depth:
-                basemaps['Google Satellite Hybrid'].add_to(m)
-                basemaps['Google Terrain'].add_to(m)
-                costDepthFilter = generate_depth(title)
-                gm.ee_export_image(costDepthFilter, 'output/flood_depth.tif', )
-                costDepthFilter_viz = costDepthFilter.where(costDepthFilter.lt(1), 1)\
-                .where(costDepthFilter.gte(1).And(costDepthFilter.lt(3)), 2)\
-                .where(costDepthFilter.gte(3).And(costDepthFilter.lt(5)), 3)\
-                .where(costDepthFilter.gte(5), 4)\
-
-                m.addLayer(costDepthFilter_viz, depth_params, name = "Flood Depth")
-
-                legend_keys_flood = ['< 1 meter', '1 - 3 meters', '3 - 5 meters', '> 5 meteres',]
-                legend_colors_flood = ['#FEF001','#FD9A01','#FD6104','#F00505']
-                m.add_legend(title = 'Flood Depth', labels=legend_keys_flood, colors=legend_colors_flood, control = True)
-
-            else:
-                basemaps['Google Terrain'].add_to(m)
-                m.addLayer(flood, flood_params, name = 'Innudation Extent',)
-
-            m.addLayerControl()
-    try:
-        with open("output/flood_depth.tif", 'rb') as f:
-            st.download_button('Download Latest Run Output (.tif)',
-            f,
-            file_name = "flood_depth.tif",
-            mime= "image/geotiff")
-    except Exception as e:
-        pass
+                flood_params = {'min': 0,
+                'max': 1,
+                'palette': ['red','#000072']}
 
 
+                depth_params = {'min': 1,
+                'max': 4,
+                'palette': ['#FEF001','#FD9A01','#FD6104','#F00505']}
+                if depth:
+                    basemaps['Google Satellite Hybrid'].add_to(m)
+                    basemaps['Google Terrain'].add_to(m)
+                    costDepthFilter = generate_depth(title)
+                    gm.ee_export_image(costDepthFilter, 'output/flood_depth.tif', )
+                    costDepthFilter_viz = costDepthFilter.where(costDepthFilter.lt(1), 1)\
+                    .where(costDepthFilter.gte(1).And(costDepthFilter.lt(3)), 2)\
+                    .where(costDepthFilter.gte(3).And(costDepthFilter.lt(5)), 3)\
+                    .where(costDepthFilter.gte(5), 4)\
 
-with row1_col1:
-    # folium_static(m.to_streamlit(scrolling = True), height = 600, width = 900)
-    m.to_streamlit(height = 600, scrolling = True)
+                    m.addLayer(costDepthFilter_viz, depth_params, name = "Flood Depth")
+
+                    legend_keys_flood = ['< 1 meter', '1 - 3 meters', '3 - 5 meters', '> 5 meteres',]
+                    legend_colors_flood = ['#FEF001','#FD9A01','#FD6104','#F00505']
+                    m.add_legend(title = 'Flood Depth', labels=legend_keys_flood, colors=legend_colors_flood, control = True)
+
+                else:
+                    basemaps['Google Terrain'].add_to(m)
+                    m.addLayer(flood, flood_params, name = 'Innudation Extent',)
+
+                m.addLayerControl()
+        try:
+            with open("output/flood_depth.tif", 'rb') as f:
+                st.download_button('Download Latest Run Output (.tif)',
+                f,
+                file_name = "flood_depth.tif",
+                mime= "image/geotiff")
+        except Exception as e:
+            pass
+
+
+
+    with row1_col1:
+        # folium_static(m.to_streamlit(scrolling = True), height = 600, width = 900)
+        m.to_streamlit(height = 600, scrolling = True)
+        url = "https://ieeexplore.ieee.org/abstract/document/9242297?casa_token=N4ao38AI93gAAAAA:XpEdirsJfsPByzd3no7JLEcrYxXcBVKd3Eu7M65dtg0iLE3XF-zgw65J4mN26QOt-C62jl6zeg"
+        st.write("Reference: [Peter, B. G., Cohen, S., Lucey, R., Munasinghe, D., Raney, A., & Brakenridge, G. R. (2020). Google Earth Engine Implementation of the Floodwater Depth Estimation Tool (FwDET-GEE) for rapid and large scale flood analysis. IEEE Geoscience and Remote Sensing Letters.](%s)" % url)
