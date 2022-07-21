@@ -9,7 +9,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import datetime
 from PIL import Image
-from osgeo import gdal
+# from osgeo import gdal
 import rioxarray as rio
 import geemap as gm
 import geemap.foliumap as geemap
@@ -133,7 +133,7 @@ with row1_col2:
                   popup=hydrosite.iloc[i]['Name'],
                ).add_to(m)
             m.addLayerControl()
-            
+
     if st.session_state.AOI_str != None:
         st.subheader('Select Date')
         st.markdown('**AOI: %s**'%(curr_region))
