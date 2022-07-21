@@ -84,6 +84,7 @@ def generate_depth(flood_raster):
 
     costDepthFilter = costDepth.where(costDepth.lt(0),0)
     costDepthFilter = costDepthFilter.updateMask(flood.mask())
+    costDepthFilter = costDepthFilter.updateMask(costDepthFilter.neq(0))
 
     return costDepthFilter
 
@@ -144,7 +145,8 @@ def app():
                     .where(costDepthFilter.gte(3).And(costDepthFilter.lt(5)), 3)\
                     .where(costDepthFilter.gte(5), 4)\
 
-                    m.addLayer(costDepthFilter_viz, depth_params, name = "Flood Depth")
+                    m.addLayer(costDepthFilter_viz, depth_params, name = "Flood Depth Estimation Using FwDet")
+                    m.addLayer(flood, flood_params, name = 'Innudation Extent From FIER-Mekong', shown = False)
 
                     legend_keys_flood = ['< 1 meter', '1 - 3 meters', '3 - 5 meters', '> 5 meteres',]
                     legend_colors_flood = ['#FEF001','#FD9A01','#FD6104','#F00505']
@@ -152,7 +154,7 @@ def app():
 
                 else:
                     basemaps['Google Terrain'].add_to(m)
-                    m.addLayer(flood, flood_params, name = 'Innudation Extent',)
+                    m.addLayer(flood, flood_params, name = 'Innudation Extent From FIER-Mekong',)
 
                 m.addLayerControl()
         try:
