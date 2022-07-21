@@ -9,8 +9,15 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import datetime
 from PIL import Image
-# from osgeo import gdal
+from osgeo import gdal
 import rioxarray as rio
+import geemap as gm
+import geemap.foliumap as geemap
+
+# Reset Output folder
+dir = 'output'
+for f in os.listdir(dir):
+    os.remove(os.path.join(dir, f))
 
 def sheet_out(url):
     return url.replace("/edit#gid=", "/export?format=csv&gid=")
@@ -57,41 +64,36 @@ row1_col1, row1_col2 = st.columns([2, 1])
 # Set up Geemap
 with row1_col1:
     if st.session_state.AOI_str == None:
-        m = folium.Map(
-            zoom_start= 5,
-            location =(12.02 , 104.81),
-            control_scale=True,
-            tiles=None
+        m = geemap.Map(
+        zoom=5,
+        center=(12.02 , 104.81),
+        tiles=None,
+        basemap = None
         )
-        plugins.Fullscreen(position='topright').add_to(m)
         basemaps['Google Terrain'].add_to(m)
         basemaps['Google Satellite Hybrid'].add_to(m)
-        m.add_child(folium.LatLngPopup())
-        folium.LayerControl().add_to(m)
+        # m.add_child(folium.LatLngPopup())
+        m.addLayerControl()
     else:
         curr_region = st.session_state.AOI_str
-        location = [12.23, 104.79] # NEED FIX!!!!!!!!!!!
-        m = folium.Map(
-            zoom_start = 7,
-            location = location,
-            control_scale=True,
-            tiles = None
-        )
+        location = (12.23, 104.79) # NEED FIX!!!!!!!!!!!
 
+        m = geemap.Map(
+        zoom=7,
+        center=(12.23, 104.79),
+        tiles=None,
+        basemap = None
+        )
         basemaps['Google Terrain'].add_to(m)
         basemaps['Google Satellite Hybrid'].add_to(m)
-        plugins.Fullscreen(position='topright').add_to(m)
-        m.add_child(folium.LatLngPopup())
-        folium.LayerControl().add_to(m)
-
         hydrosite = pd.read_csv('AOI/%s/hydrosite.csv'%(str(curr_region)))
         hydrosite = hydrosite.sort_values(by='Lat', ascending=False)
-
         for i in range(0,len(hydrosite)):
            folium.Marker(
               location=[hydrosite.iloc[i]['Lat'], hydrosite.iloc[i]['Long']],
               popup=hydrosite.iloc[i]['Name'],
            ).add_to(m)
+        m.addLayerControl()
 
 with row1_col2:
     # Form
@@ -110,18 +112,15 @@ with row1_col2:
             st.session_state.AOI_str = region
             curr_region = st.session_state.AOI_str
             location = [12.23, 104.79] # NEED FIX!!!!!!!!!!!
-            m = folium.Map(
-                zoom_start = 7,
-                location = location,
-                control_scale=True,
-                tiles = None
+            m = geemap.Map(
+            zoom=7,
+            center=(12.23, 104.79),
+            tiles=None,
+            basemap = None
             )
-
             basemaps['Google Terrain'].add_to(m)
             basemaps['Google Satellite Hybrid'].add_to(m)
-            plugins.Fullscreen(position='topright').add_to(m)
-            m.add_child(folium.LatLngPopup())
-            folium.LayerControl().add_to(m)
+
 
             hydrosite = pd.read_csv('AOI/%s/hydrosite.csv'%(str(curr_region)))
             hydrosite = hydrosite.sort_values(by='Lat', ascending=False)
@@ -133,7 +132,8 @@ with row1_col2:
                   location=[hydrosite.iloc[i]['Lat'], hydrosite.iloc[i]['Long']],
                   popup=hydrosite.iloc[i]['Name'],
                ).add_to(m)
-
+            m.addLayerControl()
+            
     if st.session_state.AOI_str != None:
         st.subheader('Select Date')
         st.markdown('**AOI: %s**'%(curr_region))
@@ -160,12 +160,14 @@ with row1_col2:
                         water_level[site] = round(df[df['time'] == d].water_level.values[0], 3)
 
                     location = [12.23, 104.79] # NEED FIX!!!!!!!!!!!
-                    m = folium.Map(
-                        zoom_start = 7,
-                        location = location,
-                        control_scale=True,
-                        tiles = None,
+                    m = geemap.Map(
+                    zoom=7,
+                    center=(12.23, 104.79),
+                    tiles=None,
+                    basemap = None
                     )
+                    basemaps['Google Terrain'].add_to(m)
+                    basemaps['Google Satellite Hybrid'].add_to(m)
 
                     image_folder = image_output(curr_region, water_level)
                     with xr.open_dataset(image_folder +'/output.nc',) as output:
@@ -204,11 +206,7 @@ with row1_col2:
                         show = True
                     ).add_to(m)
 
-                    plugins.Fullscreen(position='topright').add_to(m)
-                    basemaps['Google Terrain'].add_to(m)
-                    basemaps['Google Satellite Hybrid'].add_to(m)
-                    m.add_child(folium.LatLngPopup())
-                    folium.LayerControl().add_to(m)
+                    m.addLayerControl()
                     st.write('Region:\n', curr_region)
                     st.write('Date: \n', date)
 
@@ -257,12 +255,14 @@ with row1_col2:
                         water_level[site] = round(df[df['time'] == d].water_level.values[0], 3)
 
                     location = [12.23, 104.79] # NEED FIX!!!!!!!!!!!
-                    m = folium.Map(
-                        zoom_start = 7,
-                        location = location,
-                        control_scale=True,
-                        tiles = None
+                    m = geemap.Map(
+                    zoom=7,
+                    center=(12.23, 104.79),
+                    tiles=None,
+                    basemap = None
                     )
+                    basemaps['Google Terrain'].add_to(m)
+                    basemaps['Google Satellite Hybrid'].add_to(m)
 
                     image_folder = image_output(curr_region, water_level)
                     with xr.open_dataset(image_folder +'/output.nc',) as output:
@@ -301,12 +301,7 @@ with row1_col2:
                         show = True
                     ).add_to(m)
 
-                    plugins.Fullscreen(position='topright').add_to(m)
-                    basemaps['Google Terrain'].add_to(m)
-                    basemaps['Google Satellite Hybrid'].add_to(m)
-                    m.add_child(folium.LatLngPopup())
-                    folium.LayerControl().add_to(m)
-
+                    m.addLayerControl()
                     st.write('Region:\n', curr_region)
                     st.write('Date: \n', date)
 
@@ -326,7 +321,7 @@ with row1_col2:
 
 
 with row1_col1:
-    folium_static(m, height = 600, width = 900)
+    m.to_streamlit(height = 600, scrolling = True)
     st.write('Disclaimer: This is a test version of FIER method for Mekong Region')
     url = "https://www.sciencedirect.com/science/article/pii/S0034425720301024?casa_token=kOYlVMMWkBUAAAAA:fiFM4l6BUzJ8xTCksYUe7X4CcojddbO8ybzOSMe36f2cFWEXDa_aFHaGeEFlN8SuPGnDy7Ir8w"
     st.write("Reference: [Chang, C. H., Lee, H., Kim, D., Hwang, E., Hossain, F., Chishtie, F., ... & Basnayake, S. (2020). Hindcast and forecast of daily inundation extents using satellite SAR and altimetry data with rotated empirical orthogonal function analysis: Case study in Tonle Sap Lake Floodplain. Remote Sensing of Environment, 241, 111732.](%s)" % url)
