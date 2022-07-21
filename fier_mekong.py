@@ -215,7 +215,7 @@ def app():
                     with open("output/output.tiff", 'rb') as f:
                         st.download_button('Download Latest Run Output (.tiff)',
                         f,
-                        file_name = "output.tiff",
+                        file_name = "%s_%s.tiff"%(curr_region, date),
                         mime= "image/geotiff")
                 except:
                     pass
@@ -310,7 +310,7 @@ def app():
                     with open("output/output.tiff", 'rb') as f:
                         st.download_button('Download Latest Run Output (.tiff)',
                         f,
-                        file_name = "output.tiff",
+                        file_name = "%s_%s.tiff"%(curr_region, date),
                         mime= "image/geotiff")
                 except:
                     pass
@@ -322,7 +322,7 @@ def app():
 
 
     with row1_col1:
-        m.to_streamlit(height = 600, scrolling = True)
+        m.to_streamlit(height = 700, scrolling = True)
         st.write('Disclaimer: This is a test version of FIER method for Mekong Region')
         url = "https://www.sciencedirect.com/science/article/pii/S0034425720301024?casa_token=kOYlVMMWkBUAAAAA:fiFM4l6BUzJ8xTCksYUe7X4CcojddbO8ybzOSMe36f2cFWEXDa_aFHaGeEFlN8SuPGnDy7Ir8w"
         st.write("Reference: [Chang, C. H., Lee, H., Kim, D., Hwang, E., Hossain, F., Chishtie, F., ... & Basnayake, S. (2020). Hindcast and forecast of daily inundation extents using satellite SAR and altimetry data with rotated empirical orthogonal function analysis: Case study in Tonle Sap Lake Floodplain. Remote Sensing of Environment, 241, 111732.](%s)" % url)
