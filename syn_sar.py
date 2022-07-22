@@ -61,7 +61,7 @@ def synthesize_sar(region, water_level,):
     aoi_indx = np.argwhere(~np.isnan(dry_meanVV))
     water_indx = np.argwhere( z_score_img < zscore_threshold )
     water_map = np.empty((syn_sar.shape[0], syn_sar.shape[1]))
-    water_map[:] = np.nan
+    water_map[:] = 0
     water_map[aoi_indx[:,0], aoi_indx[:,1]] = 0
     water_map[water_indx[:,0], water_indx[:,1]] = 1
     # water_map[water_map == 2] = np.nan
@@ -90,14 +90,14 @@ def image_output(region, water_level):
     # plt.savefig(folder_name +'/z_score.png', bbox_inches='tight', dpi=300, pad_inches = 0)
     # plt.close()
 
-    water_cmap =  matplotlib.colors.ListedColormap(["silver","darkblue"])
-    # water_cmap.set_bad('w', 0.001)
-    fig = plt.imshow(water_map_image, cmap = water_cmap)
-    #plt.clim(vmin=0, vmax=1)
-    plt.axis('off')
-    plt.savefig(folder_name +'/water_map.png', bbox_inches='tight', dpi=300, interpolation='None', pad_inches = 0)
-    plt.close()
-    #plt.show()
+    # water_cmap =  matplotlib.colors.ListedColormap(["silver","darkblue"])
+    # # water_cmap.set_bad('w', 0.001)
+    # fig = plt.imshow(water_map_image, cmap = water_cmap)
+    # #plt.clim(vmin=0, vmax=1)
+    # plt.axis('off')
+    # plt.savefig(folder_name +'/water_map.png', bbox_inches='tight', dpi=300, interpolation='None', pad_inches = 0)
+    # plt.close()
+    # plt.show()
 
     # Make nc file:
     all_meanVV_dir = '%s/stats_img/500m/all_meanVV.nc'%(region)
@@ -121,7 +121,7 @@ def image_output(region, water_level):
     )
     all_meanVV.close()
     out_file.to_netcdf(folder_name +'/output.nc')
-    
+
     nc_file = xr.open_dataset('output/output.nc')
     innudation_map = nc_file['Inundation Map']
     innudation_map = innudation_map.rio.set_spatial_dims('lon', 'lat')

@@ -32,14 +32,14 @@ basemaps = {
         name = 'Google Satellite Hybrid',
     ),
 }
-def generate_depth(flood_raster):
+
+def generate_depth(flood_raster, ):
     flood = ee.Image(flood_raster)
     flood = flood.updateMask(flood.gte(1));
     area = flood.geometry().bounds().buffer(1000).bounds()
 
     dem = ee.Image('users/sondo/merit_dem_cogeo').clip(area)
     projection = dem.projection()
-    resolution = projection.nominalScale().getInfo()
     dem = dem.updateMask(dem.gte(0))
 
     jrc = ee.Image('JRC/GSW1_3/GlobalSurfaceWater').select('transition').clip(area)
@@ -143,7 +143,7 @@ def app():
                     costDepthFilter_viz = costDepthFilter.where(costDepthFilter.lt(1), 1)\
                     .where(costDepthFilter.gte(1).And(costDepthFilter.lt(3)), 2)\
                     .where(costDepthFilter.gte(3).And(costDepthFilter.lt(5)), 3)\
-                    .where(costDepthFilter.gte(5), 4)\
+                    .where(costDepthFilter.gte(5), 4)
 
                     m.addLayer(costDepthFilter_viz, depth_params, name = "Flood Depth Estimation Using FwDet")
                     m.addLayer(flood, flood_params, name = 'Innudation Extent From FIER-Mekong', shown = False)

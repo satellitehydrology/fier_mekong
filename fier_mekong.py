@@ -9,10 +9,15 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import datetime
 from PIL import Image
+
 # from osgeo import gdal
+
 import rioxarray as rio
 import geemap as gm
 import geemap.foliumap as geemap
+import ee
+
+
 
 # Reset Output folder
 dir = 'output'
@@ -27,6 +32,59 @@ def colorize(data, cmap='viridis'):
     normed_data = (array - array.min()) / (array.max() - array.min())
     cm = plt.cm.get_cmap(cmap)
     return cm(array)
+
+def generate_depth(flood):
+    area = flood.geometry().bounds().buffer(1000).bounds()
+
+    dem = ee.Image('users/sondo/merit_dem_cogeo').clip(area)
+    projection = dem.projection()
+    dem = dem.updateMask(dem.gte(0))
+
+    jrc = ee.Image('JRC/GSW1_3/GlobalSurfaceWater').select('transition').clip(area)
+    water_image = jrc
+
+    flood_image = flood.multiply(0)
+    flood_image = flood_image.reproject(projection)
+
+    w = water_image.reproject(projection)
+    waterFill = flood_image.mask().where(w.eq(1),1)
+    flood_image = waterFill.updateMask(waterFill.eq(1)).multiply(0)
+
+    kernel = ee.Kernel.fixed(3,3,[[1,1,1],[1,1,1],[1,1,1]])
+    kernel_weighted = ee.Kernel.fixed(3,3,[[1,1,1],[1,0,1],[1,1,1]])
+    median = dem.focal_median(kernel = kernel).reproject(projection)
+    median_weighted = dem.focal_median(kernel = kernel_weighted).reproject(projection)
+    diff = dem.subtract(median)
+    mzscore = diff.multiply(0.6745).divide(diff.abs().focal_median(kernel = kernel).reproject(projection))
+    fillDEM = dem.where(mzscore.gt(3.5),median_weighted)
+    expand = flood_image.focal_max(kernel = ee.Kernel.square(radius =  projection.nominalScale(), units= 'meters',)).reproject(projection)
+    demMask = fillDEM.updateMask(flood_image.mask().eq(0))
+    boundary = demMask.add(expand)
+    medianBoundary = boundary.focal_median(kernel = kernel).reproject(projection)
+    medianWeightedBoundary = boundary.focal_median(kernel = kernel_weighted).reproject(projection)
+    diffBoundary = boundary.subtract(medianBoundary)
+    mzscoreBoundary = diffBoundary.multiply(0.6745).divide(diffBoundary.abs().focal_median(kernel = kernel).reproject(projection))
+    fill = fillDEM.where(mzscoreBoundary.gt(3.5),medianWeightedBoundary)
+
+    mod = fill.updateMask(flood_image.mask().eq(0))
+    source = mod.mask()
+    val = 10000
+    push = 5000
+    cost0 = ee.Image(val).where(source,0).cumulativeCost(source,push)
+    cost1 = ee.Image(val).where(source,1).cumulativeCost(source,push)
+    cost2 = mod.unmask(val).cumulativeCost(source,push)
+    costFill = cost2.subtract(cost0).divide(cost1.subtract(cost0))
+    costSurface = mod.unmask(0).add(costFill)
+
+    boxcar = ee.Kernel.square(radius = 3, units = 'pixels', normalize = True);
+    costDepth = costSurface.subtract(fill).rename('FwDET_GEE').convolve(boxcar)\
+    .reproject(projection).updateMask(flood_image.eq(0))
+
+    costDepthFilter = costDepth.where(costDepth.lt(0),0)
+    costDepthFilter = costDepthFilter.updateMask(flood.mask())
+    costDepthFilter = costDepthFilter.updateMask(costDepthFilter.neq(0))
+
+    return costDepthFilter
 
 # Page Configuration
 # st.set_page_config(layout="wide")
@@ -142,8 +200,8 @@ def app():
             st.subheader('Select Date')
             st.markdown('**AOI: %s**'%(curr_region))
             run_type = st.radio('Run type:', ('Hindcast', 'Forecast'))
+            depth = st.checkbox('Flood Depth Estimation')
             curr_region = st.session_state.AOI_str
-
 
             if run_type == 'Hindcast':
                 with st.form("Run Hindcasted FIER"):
@@ -174,12 +232,16 @@ def app():
                         basemaps['Google Satellite Hybrid'].add_to(m)
 
                         image_folder = image_output(curr_region, water_level)
-                        with xr.open_dataset(image_folder +'/output.nc',) as output:
-                            bounds = [[output.lat.values.min(), output.lon.values.min()], [output.lat.values.max(), output.lon.values.max()]]
-                            sar_image, z_score_image, water_map_image = output['Synthesized SAR Image'].values, output['Z-score Image'].values, output['Inundation Map'].values
+                        # with xr.open_dataset(image_folder +'/output.nc',) as output:
+                            # bounds = [[output.lat.values.min(), output.lon.values.min()], [output.lat.values.max(), output.lon.values.max()]]
+                            # sar_image, z_score_image, water_map_image = output['Synthesized SAR Image'].values, output['Z-score Image'].values, output['Inundation Map'].values
 
-                        water_cmap =  matplotlib.colors.ListedColormap(["silver","darkblue"])
-                        water_map_image =  colorize(water_map_image, water_cmap)
+                        innudation_img = gm.netcdf_to_ee(image_folder +'/output.nc',  var_names = 'Inundation Map')
+                        innudation_img = innudation_img .clip(ee.Image('users/sondo/output_test').geometry())
+                        innudation_img = innudation_img.updateMask(innudation_img.gte(1));
+
+                        # water_cmap =  matplotlib.colors.ListedColormap(["silver","darkblue"])
+                        # water_map_image =  colorize(water_map_image, water_cmap)
 
                         # folium.raster_layers.ImageOverlay(
                         #     image= image_folder +'/syn_sar.png',
@@ -201,27 +263,55 @@ def app():
                         # ).add_to(m)
 
                         # Add Inundation
-                        folium.raster_layers.ImageOverlay(
-                            # image= image_folder +'/water_map.png',
-                            image = water_map_image,
-                            bounds = bounds,
-                            opacity = 0.5,
-                            name = 'Inundation Map_' + curr_region ,
-                            show = True
-                        ).add_to(m)
+                        # folium.raster_layers.ImageOverlay(
+                        #     # image= image_folder +'/water_map.png',
+                        #     image = water_map_image,
+                        #     bounds = bounds,
+                        #     opacity = 1,
+                        #     name = 'Inundation Map_' + curr_region ,
+                        #     show = True
+                        # ).add_to(m)
+
+                        flood_params = {'min': 0,'max': 1,'palette': ['red','#000072']}
+                        m.addLayer(innudation_img, flood_params, name = 'Innudation Extent')
+
+                        if depth:
+                            costDepthFilter = generate_depth(innudation_img)
+                            gm.ee_export_image(costDepthFilter, 'output/flood_depth.tif', )
+                            costDepthFilter_viz = costDepthFilter.where(costDepthFilter.lt(1), 1)\
+                            .where(costDepthFilter.gte(1).And(costDepthFilter.lt(3)), 2)\
+                            .where(costDepthFilter.gte(3).And(costDepthFilter.lt(5)), 3)\
+                            .where(costDepthFilter.gte(5), 4)
+
+                            depth_params = {'min': 1,
+                            'max': 4,
+                            'palette': ['#FEF001','#FD9A01','#FD6104','#F00505']}
+
+                            m.addLayer(costDepthFilter_viz, depth_params, name = "Flood Depth Estimation Using FwDet")
+                            legend_keys_flood = ['< 1 meter', '1 - 3 meters', '3 - 5 meters', '> 5 meteres',]
+                            legend_colors_flood = ['#FEF001','#FD9A01','#FD6104','#F00505']
+                            m.add_legend(title = 'Flood Depth Estimation', labels=legend_keys_flood, colors=legend_colors_flood, control = True)
 
                         m.addLayerControl()
                         st.write('Region:\n', curr_region)
                         st.write('Date: \n', date)
-
                 try:
                     with open("output/output.tiff", 'rb') as f:
-                        st.download_button('Download Latest Run Output (.tiff)',
+                        st.download_button('Download Latest Innudation Extent Output (.tiff)',
                         f,
                         file_name = "%s_%s.tiff"%(curr_region, date),
                         mime= "image/geotiff")
                 except:
                     pass
+                if depth:
+                    try:
+                        with open("output/output.tiff", 'rb') as f:
+                            st.download_button('Download Latest Flood Depth Output (.tif)',
+                            f,
+                            file_name = "%s_%s.tif"%(curr_region, date),
+                            mime= "image/geotiff")
+                    except:
+                        pass
 
             else:
                 with st.form("Run Forecast FIER"):
@@ -269,12 +359,16 @@ def app():
                         basemaps['Google Satellite Hybrid'].add_to(m)
 
                         image_folder = image_output(curr_region, water_level)
-                        with xr.open_dataset(image_folder +'/output.nc',) as output:
-                            bounds = [[output.lat.values.min(), output.lon.values.min()], [output.lat.values.max(), output.lon.values.max()]]
-                            sar_image, z_score_image, water_map_image = output['Synthesized SAR Image'].values, output['Z-score Image'].values, output['Inundation Map'].values
+                        # with xr.open_dataset(image_folder +'/output.nc',) as output:
+                            # bounds = [[output.lat.values.min(), output.lon.values.min()], [output.lat.values.max(), output.lon.values.max()]]
+                            # sar_image, z_score_image, water_map_image = output['Synthesized SAR Image'].values, output['Z-score Image'].values, output['Inundation Map'].values
 
-                        water_cmap =  matplotlib.colors.ListedColormap(["silver","darkblue"])
-                        water_map_image =  colorize(water_map_image, water_cmap)
+                        innudation_img = gm.netcdf_to_ee(image_folder +'/output.nc',  var_names = 'Inundation Map')
+                        innudation_img = innudation_img .clip(ee.Image('users/sondo/output_test').geometry())
+                        innudation_img = innudation_img.updateMask(innudation_img.gte(1));
+
+                        # water_cmap =  matplotlib.colors.ListedColormap(["silver","darkblue"])
+                        # water_map_image =  colorize(water_map_image, water_cmap)
 
                         # folium.raster_layers.ImageOverlay(
                         #     image= image_folder +'/syn_sar.png',
@@ -296,27 +390,55 @@ def app():
                         # ).add_to(m)
 
                         # Add Inundation
-                        folium.raster_layers.ImageOverlay(
-                            # image= image_folder +'/water_map.png',
-                            image = water_map_image,
-                            bounds = bounds,
-                            opacity = 0.5,
-                            name = 'Inundation Map_' + curr_region ,
-                            show = True
-                        ).add_to(m)
+                        # folium.raster_layers.ImageOverlay(
+                        #     # image= image_folder +'/water_map.png',
+                        #     image = water_map_image,
+                        #     bounds = bounds,
+                        #     opacity = 1,
+                        #     name = 'Inundation Map_' + curr_region ,
+                        #     show = True
+                        # ).add_to(m)
+
+                        flood_params = {'min': 0,'max': 1,'palette': ['red','#000072']}
+                        m.addLayer(innudation_img, flood_params, name = 'Innudation Extent')
+
+                        if depth:
+                            costDepthFilter = generate_depth(innudation_img)
+                            gm.ee_export_image(costDepthFilter, 'output/flood_depth.tif', )
+                            costDepthFilter_viz = costDepthFilter.where(costDepthFilter.lt(1), 1)\
+                            .where(costDepthFilter.gte(1).And(costDepthFilter.lt(3)), 2)\
+                            .where(costDepthFilter.gte(3).And(costDepthFilter.lt(5)), 3)\
+                            .where(costDepthFilter.gte(5), 4)
+
+                            depth_params = {'min': 1,
+                            'max': 4,
+                            'palette': ['#FEF001','#FD9A01','#FD6104','#F00505']}
+
+                            m.addLayer(costDepthFilter_viz, depth_params, name = "Flood Depth Estimation Using FwDet")
+                            legend_keys_flood = ['< 1 meter', '1 - 3 meters', '3 - 5 meters', '> 5 meteres',]
+                            legend_colors_flood = ['#FEF001','#FD9A01','#FD6104','#F00505']
+                            m.add_legend(title = 'Flood Depth Estimation', labels=legend_keys_flood, colors=legend_colors_flood, control = True)
 
                         m.addLayerControl()
                         st.write('Region:\n', curr_region)
                         st.write('Date: \n', date)
-
                 try:
                     with open("output/output.tiff", 'rb') as f:
-                        st.download_button('Download Latest Run Output (.tiff)',
+                        st.download_button('Download Latest Innudation Extent Output (.tiff)',
                         f,
                         file_name = "%s_%s.tiff"%(curr_region, date),
                         mime= "image/geotiff")
                 except:
                     pass
+                if depth:
+                    try:
+                        with open("output/output.tiff", 'rb') as f:
+                            st.download_button('Download Latest Flood Depth Output (.tif)',
+                            f,
+                            file_name = "%s_%s.tif"%(curr_region, date),
+                            mime= "image/geotiff")
+                    except:
+                        pass
 
         first = Image.open("logo/first.PNG")
         second = Image.open("logo/second_row.PNG")
@@ -325,11 +447,13 @@ def app():
 
 
     with row1_col1:
-        m.to_streamlit(height = 700, scrolling = True)
+        m.to_streamlit(height = 800, scrolling = True)
         st.write('Disclaimer: This is a test version of FIER method for Mekong Region')
         url = "https://www.sciencedirect.com/science/article/pii/S0034425720301024?casa_token=kOYlVMMWkBUAAAAA:fiFM4l6BUzJ8xTCksYUe7X4CcojddbO8ybzOSMe36f2cFWEXDa_aFHaGeEFlN8SuPGnDy7Ir8w"
         st.write("Reference: [Chang, C. H., Lee, H., Kim, D., Hwang, E., Hossain, F., Chishtie, F., ... & Basnayake, S. (2020). Hindcast and forecast of daily inundation extents using satellite SAR and altimetry data with rotated empirical orthogonal function analysis: Case study in Tonle Sap Lake Floodplain. Remote Sensing of Environment, 241, 111732.](%s)" % url)
         url_2 = "https://www.sciencedirect.com/science/article/abs/pii/S1364815218306194"
         st.write("[Chang, C. H., Lee, H., Hossain, F., Basnayake, S., Jayasinghe, S., Chishtie, F., ... & Du Bui, D. (2019). A model-aided satellite-altimetry-based flood forecasting system for the Mekong River. Environmental modelling & software, 112, 112-127.](%s)" % url_2)
+        url_3 = "https://ieeexplore.ieee.org/abstract/document/9242297?casa_token=N4ao38AI93gAAAAA:XpEdirsJfsPByzd3no7JLEcrYxXcBVKd3Eu7M65dtg0iLE3XF-zgw65J4mN26QOt-C62jl6zeg"
+        st.write("[Peter, B. G., Cohen, S., Lucey, R., Munasinghe, D., Raney, A., & Brakenridge, G. R. (2020). Google Earth Engine Implementation of the Floodwater Depth Estimation Tool (FwDET-GEE) for rapid and large scale flood analysis. IEEE Geoscience and Remote Sensing Letters.](%s)" % url_3)
         st.write("This app has been developed by Chi-Hung Chang  & Son Do at University of Houston with supports from NASA SERVIR and GEOGloWS.")
         st.write("Kel Markert at SERVIR Coordination Office is also acknowledged for the development of this FIER-Mekong App.")
