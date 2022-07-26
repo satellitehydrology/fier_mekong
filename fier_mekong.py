@@ -113,6 +113,11 @@ basemaps = {
         attr = 'Google',
         name = 'Google Satellite Hybrid',
     ),
+    'Esri Ocean': folium.TileLayer(
+        tiles="https://services.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}",
+        attr="Esri",
+        name="Esri Ocean",
+    ),
 }
 
 def app():
@@ -228,6 +233,7 @@ def app():
                         tiles=None,
                         basemap = None
                         )
+                        basemaps['Esri Ocean'].add_to(m)
                         basemaps['Google Terrain'].add_to(m)
                         basemaps['Google Satellite Hybrid'].add_to(m)
 
@@ -240,40 +246,9 @@ def app():
                         innudation_img = innudation_img .clip(ee.Image('users/sondo/output_test').geometry())
                         innudation_img = innudation_img.updateMask(innudation_img.gte(1));
 
-                        # water_cmap =  matplotlib.colors.ListedColormap(["silver","darkblue"])
-                        # water_map_image =  colorize(water_map_image, water_cmap)
-
-                        # folium.raster_layers.ImageOverlay(
-                        #     image= image_folder +'/syn_sar.png',
-                        #     # image = sar_image,
-                        #     bounds = bounds,
-                        #     opacity = 0.5,
-                        #     name = 'Synthesized Sar Image_' + curr_region,
-                        #     show = False,
-                        # ).add_to(m)
-                        #
-                        # # Add Z_SCORE
-                        # folium.raster_layers.ImageOverlay(
-                        #     image= image_folder +'/z_score.png',
-                        #     # image = z_score_image,
-                        #     bounds = bounds,
-                        #     opacity = 0.5,
-                        #     name = 'Z-score Image_' + curr_region ,
-                        #     show = False
-                        # ).add_to(m)
-
-                        # Add Inundation
-                        # folium.raster_layers.ImageOverlay(
-                        #     # image= image_folder +'/water_map.png',
-                        #     image = water_map_image,
-                        #     bounds = bounds,
-                        #     opacity = 1,
-                        #     name = 'Inundation Map_' + curr_region ,
-                        #     show = True
-                        # ).add_to(m)
-
                         flood_params = {'min': 0,'max': 1,'palette': ['red','#000072']}
                         m.addLayer(innudation_img, flood_params, name = 'Innudation Extent')
+                        # m.centerObject(innudation_img)
 
                         if depth:
                             costDepthFilter = generate_depth(innudation_img)
@@ -290,9 +265,9 @@ def app():
                             m.addLayer(costDepthFilter_viz, depth_params, name = "Flood Depth Estimation Using FwDet")
                             legend_keys_flood = ['< 1 meter', '1 - 3 meters', '3 - 5 meters', '> 5 meteres',]
                             legend_colors_flood = ['#FEF001','#FD9A01','#FD6104','#F00505']
-                            m.add_legend(title = 'Flood Depth Estimation', labels=legend_keys_flood, colors=legend_colors_flood, control = True)
+                            m.add_legend(title = 'Flood Depth Estimation', labels=legend_keys_flood, colors=legend_colors_flood, control = True, layer_name = 'Flood Depth Estimation Using FwDet')
 
-                        m.addLayerControl()
+                        # m.addLayerControl()
                         st.write('Region:\n', curr_region)
                         st.write('Date: \n', date)
                 try:
@@ -355,6 +330,7 @@ def app():
                         tiles=None,
                         basemap = None
                         )
+                        basemaps['Esri Ocean'].add_to(m)
                         basemaps['Google Terrain'].add_to(m)
                         basemaps['Google Satellite Hybrid'].add_to(m)
 
@@ -367,40 +343,9 @@ def app():
                         innudation_img = innudation_img .clip(ee.Image('users/sondo/output_test').geometry())
                         innudation_img = innudation_img.updateMask(innudation_img.gte(1));
 
-                        # water_cmap =  matplotlib.colors.ListedColormap(["silver","darkblue"])
-                        # water_map_image =  colorize(water_map_image, water_cmap)
-
-                        # folium.raster_layers.ImageOverlay(
-                        #     image= image_folder +'/syn_sar.png',
-                        #     # image = sar_image,
-                        #     bounds = bounds,
-                        #     opacity = 0.5,
-                        #     name = 'Synthesized Sar Image_' + curr_region,
-                        #     show = False,
-                        # ).add_to(m)
-                        #
-                        # # Add Z_SCORE
-                        # folium.raster_layers.ImageOverlay(
-                        #     image= image_folder +'/z_score.png',
-                        #     # image = z_score_image,
-                        #     bounds = bounds,
-                        #     opacity = 0.5,
-                        #     name = 'Z-score Image_' + curr_region ,
-                        #     show = False
-                        # ).add_to(m)
-
-                        # Add Inundation
-                        # folium.raster_layers.ImageOverlay(
-                        #     # image= image_folder +'/water_map.png',
-                        #     image = water_map_image,
-                        #     bounds = bounds,
-                        #     opacity = 1,
-                        #     name = 'Inundation Map_' + curr_region ,
-                        #     show = True
-                        # ).add_to(m)
-
                         flood_params = {'min': 0,'max': 1,'palette': ['red','#000072']}
                         m.addLayer(innudation_img, flood_params, name = 'Innudation Extent')
+                        # m.centerObject(innudation_img)
 
                         if depth:
                             costDepthFilter = generate_depth(innudation_img)
@@ -417,9 +362,9 @@ def app():
                             m.addLayer(costDepthFilter_viz, depth_params, name = "Flood Depth Estimation Using FwDet")
                             legend_keys_flood = ['< 1 meter', '1 - 3 meters', '3 - 5 meters', '> 5 meteres',]
                             legend_colors_flood = ['#FEF001','#FD9A01','#FD6104','#F00505']
-                            m.add_legend(title = 'Flood Depth Estimation', labels=legend_keys_flood, colors=legend_colors_flood, control = True)
+                            m.add_legend(title = 'Flood Depth Estimation', labels=legend_keys_flood, colors=legend_colors_flood, control = True, layer_name = 'Flood Depth Estimation Using FwDet')
 
-                        m.addLayerControl()
+                        # m.addLayerControl()
                         st.write('Region:\n', curr_region)
                         st.write('Date: \n', date)
                 try:
@@ -448,6 +393,7 @@ def app():
 
     with row1_col1:
         m.to_streamlit(height = 700, scrolling = True)
+        # folium_static(m, height = 600, width = 900)
         st.write('Disclaimer: This is a test version of FIER method for Mekong Region')
         url = "https://www.sciencedirect.com/science/article/pii/S0034425720301024?casa_token=kOYlVMMWkBUAAAAA:fiFM4l6BUzJ8xTCksYUe7X4CcojddbO8ybzOSMe36f2cFWEXDa_aFHaGeEFlN8SuPGnDy7Ir8w"
         st.write("Reference: [Chang, C. H., Lee, H., Kim, D., Hwang, E., Hossain, F., Chishtie, F., ... & Basnayake, S. (2020). Hindcast and forecast of daily inundation extents using satellite SAR and altimetry data with rotated empirical orthogonal function analysis: Case study in Tonle Sap Lake Floodplain. Remote Sensing of Environment, 241, 111732.](%s)" % url)
