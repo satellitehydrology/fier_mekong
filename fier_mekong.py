@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import datetime
 from PIL import Image
 
-# from osgeo import gdal
+from osgeo import gdal
 
 import rioxarray as rio
 import geemap as gm
@@ -76,7 +76,7 @@ def generate_depth(flood):
 
     costDepthFilter = costDepth.where(costDepth.lt(0),0)
     costDepthFilter = costDepthFilter.updateMask(flood.mask())
-    costDepthFilter = costDepthFilter.updateMask(costDepthFilter.neq(0))
+    # costDepthFilter = costDepthFilter.updateMask(costDepthFilter.neq(0))
 
     return costDepthFilter
 
@@ -246,24 +246,25 @@ def app():
                         innudation_img = innudation_img.updateMask(innudation_img.gte(1));
 
                         flood_params = {'min': 0,'max': 1,'palette': ['red','#000072']}
-                        m.addLayer(innudation_img, flood_params, name = 'Innudation Extent')
+                        m.addLayer(innudation_img, flood_params, name = 'Innudation Extent', shown = ~depth)
                         # m.centerObject(innudation_img)
 
                         if depth:
                             costDepthFilter = generate_depth(innudation_img)
                             gm.ee_export_image(costDepthFilter, 'output/flood_depth.tif', )
-                            costDepthFilter_viz = costDepthFilter.where(costDepthFilter.lt(1), 1)\
+                            costDepthFilter_viz = costDepthFilter.where(costDepthFilter.eq(0), 0)\
+                            .where(costDepthFilter.gt(0).And(costDepthFilter.lt(1)), 1)\
                             .where(costDepthFilter.gte(1).And(costDepthFilter.lt(3)), 2)\
                             .where(costDepthFilter.gte(3).And(costDepthFilter.lt(5)), 3)\
                             .where(costDepthFilter.gte(5), 4)
 
-                            depth_params = {'min': 1,
+                            depth_params = {'min': 0,
                             'max': 4,
-                            'palette': ['#FEF001','#FD9A01','#FD6104','#F00505']}
+                            'palette': ['#FEF001','#FD9A01','#FD6104','#F00505','#542061']}
 
                             m.addLayer(costDepthFilter_viz, depth_params, name = "Flood Depth Estimation Using FwDet")
-                            legend_keys_flood = ['< 1 meter', '1 - 3 meters', '3 - 5 meters', '> 5 meteres',]
-                            legend_colors_flood = ['#FEF001','#FD9A01','#FD6104','#F00505']
+                            legend_keys_flood = ['0 meter (Estimated)','0 - 1 meter', '1 - 3 meters', '3 - 5 meters', '> 5 meters',]
+                            legend_colors_flood = ['#FEF001','#FD9A01','#FD6104','#F00505','#542061']
                             m.add_legend(title = 'Flood Depth Estimation', labels=legend_keys_flood, colors=legend_colors_flood, control = True, layer_name = 'Flood Depth Estimation Using FwDet')
 
                         # m.addLayerControl()
@@ -349,18 +350,19 @@ def app():
                         if depth:
                             costDepthFilter = generate_depth(innudation_img)
                             gm.ee_export_image(costDepthFilter, 'output/flood_depth.tif', )
-                            costDepthFilter_viz = costDepthFilter.where(costDepthFilter.lt(1), 1)\
+                            costDepthFilter_viz = costDepthFilter.where(costDepthFilter.eq(0), 0)\
+                            .where(costDepthFilter.gt(0).And(costDepthFilter.lt(1)), 1)\
                             .where(costDepthFilter.gte(1).And(costDepthFilter.lt(3)), 2)\
                             .where(costDepthFilter.gte(3).And(costDepthFilter.lt(5)), 3)\
                             .where(costDepthFilter.gte(5), 4)
 
-                            depth_params = {'min': 1,
+                            depth_params = {'min': 0,
                             'max': 4,
-                            'palette': ['#FEF001','#FD9A01','#FD6104','#F00505']}
+                            'palette': ['#FEF001','#FD9A01','#FD6104','#F00505','#542061']}
 
                             m.addLayer(costDepthFilter_viz, depth_params, name = "Flood Depth Estimation Using FwDet")
-                            legend_keys_flood = ['< 1 meter', '1 - 3 meters', '3 - 5 meters', '> 5 meteres',]
-                            legend_colors_flood = ['#FEF001','#FD9A01','#FD6104','#F00505']
+                            legend_keys_flood = ['0 meter (Estimated)','0 - 1 meter', '1 - 3 meters', '3 - 5 meters', '> 5 meters',]
+                            legend_colors_flood = ['#FEF001','#FD9A01','#FD6104','#F00505','#542061']
                             m.add_legend(title = 'Flood Depth Estimation', labels=legend_keys_flood, colors=legend_colors_flood, control = True, layer_name = 'Flood Depth Estimation Using FwDet')
 
                         # m.addLayerControl()
