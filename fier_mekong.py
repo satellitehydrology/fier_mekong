@@ -18,12 +18,6 @@ import geemap.foliumap as geemap
 import ee
 
 
-
-# Reset Output folder
-dir = 'output'
-for f in os.listdir(dir):
-    os.remove(os.path.join(dir, f))
-
 def sheet_out(url):
     return url.replace("/edit#gid=", "/export?format=csv&gid=")
 
@@ -126,6 +120,11 @@ def app():
 
     if 'AOI_str' not in st.session_state:
         st.session_state.AOI_str = None
+
+    # Reset Output folder
+    dir = 'output'
+    for f in os.listdir(dir):
+        os.remove(os.path.join(dir, f))
 
     row1_col1, row1_col2 = st.columns([2, 1])
     # Set up Geemap
