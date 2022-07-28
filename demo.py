@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import datetime
 from PIL import Image
 
-from osgeo import gdal
+# from osgeo import gdal
 
 import rioxarray as rio
 import geemap as gm
@@ -86,6 +86,9 @@ st.set_page_config(layout="wide")
 if 'AOI_str' not in st.session_state:
     st.session_state.AOI_str = 'LowerMekong'
 
+
+
+
 basemaps = {
     'Google Maps': folium.TileLayer(
         tiles = 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
@@ -148,19 +151,30 @@ with row1_col2:
 
     if run_type == 'Hindcast':
         with st.form("Run Hindcasted FIER"):
+            sheet_link = pd.read_csv('AOI/%s/wl_sheet_hindcast.txt'%(str(curr_region)), sep = '\t')
+            hindcast_wl = {}
+            for i in range(sheet_link.shape[0]):
+                station = pd.read_csv(sheet_out(sheet_link.iloc[i,1]), index_col=0).reset_index(drop = True)
+                station.iloc[:,0] = pd.to_datetime(station.iloc[:,0])
+                hindcast_wl[sheet_link.iloc[i,0]] = station
+
+            test = hindcast_wl[sheet_link.iloc[1,0]]
+            min_date = test.iloc[0,0]
+            max_date = test.iloc[-1,0]
             date = st.date_input(
-                 "Select Hindcasted Date (2008-01-01 to 2019-12-31):",
+                 "Select Hindcasted Date (2008-01-01 to %s):"%(str(max_date)[:10]),
                  value = datetime.date(2018, 10, 17),
-                 min_value = datetime.date(2008, 1, 1),
-                 max_value = datetime.date(2019, 12, 31),
+                 min_value = min_date,
+                 max_value = max_date,
                  )
+
             submitted = st.form_submit_button("Submit")
             if submitted:
                 hydrosite = pd.read_csv('AOI/%s/hydrosite.csv'%(str(curr_region)))
                 water_level = {}
                 for i in range(hydrosite.shape[0]):
                     site = hydrosite.loc[i,'ID']
-                    df = pd.read_excel('AOI/%s/water_level/historical/500m/%s.xlsx'%(curr_region, site))
+                    df = hindcast_wl[site]
                     d = pd.Timestamp(date)
                     water_level[site] = round(df[df['time'] == d].water_level.values[0], 3)
 
@@ -211,6 +225,7 @@ with row1_col2:
                 # m.addLayerControl()
                 st.write('Region:\n', curr_region)
                 st.write('Date: \n', date)
+                st.write('Water Level (m): \n', water_level)
         try:
             with open("output/output.tiff", 'rb') as f:
                 st.download_button('Download Latest Innudation Extent Output (.tiff)',
@@ -248,9 +263,6 @@ with row1_col2:
                  min_value = min_date,
                  max_value = max_date,
                  )
-
-
-
 
             submitted = st.form_submit_button("Submit")
 
@@ -312,6 +324,7 @@ with row1_col2:
                 # m.addLayerControl()
                 st.write('Region:\n', curr_region)
                 st.write('Date: \n', date)
+                st.write('Water Level (m): \n', water_level)
         try:
             with open("output/output.tiff", 'rb') as f:
                 st.download_button('Download Latest Innudation Extent Output (.tiff)',
