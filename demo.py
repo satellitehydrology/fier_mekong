@@ -146,7 +146,7 @@ with row1_col2:
     st.subheader('Select Date')
     st.markdown('**AOI: %s**'%(curr_region))
     run_type = st.radio('Run type:', ('Hindcast', 'Forecast'))
-    depth = st.checkbox('Flood Depth Estimation')
+
 
 
     if run_type == 'Hindcast':
@@ -167,6 +167,8 @@ with row1_col2:
                  min_value = min_date,
                  max_value = max_date,
                  )
+
+            depth = st.checkbox('Flood Depth Estimation')
 
             submitted = st.form_submit_button("Submit")
             if submitted:
@@ -263,6 +265,8 @@ with row1_col2:
                  min_value = min_date,
                  max_value = max_date,
                  )
+
+            depth = st.checkbox('Flood Depth Estimation')
 
             submitted = st.form_submit_button("Submit")
 
