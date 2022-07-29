@@ -197,7 +197,7 @@ with row1_col2:
                     # sar_image, z_score_image, water_map_image = output['Synthesized SAR Image'].values, output['Z-score Image'].values, output['Inundation Map'].values
 
                 innudation_img = gm.netcdf_to_ee(image_folder +'/output.nc',  var_names = 'Inundation Map')
-                innudation_img = innudation_img .clip(ee.Image('users/sondo/output_test').geometry())
+                innudation_img = innudation_img.clip(ee.Image('users/sondo/output_test').geometry())
                 innudation_img = innudation_img.updateMask(innudation_img.gte(1));
 
                 flood_params = {'min': 0,'max': 1,'palette': ['red','#000072']}
@@ -227,7 +227,7 @@ with row1_col2:
                 # m.addLayerControl()
                 st.write('Region:\n', curr_region)
                 st.write('Date: \n', date)
-                st.write('Water Level (m): \n', water_level)
+                # st.write('Water Level (m): \n', water_level)
         try:
             with open("output/output.tiff", 'rb') as f:
                 st.download_button('Download Latest Innudation Extent Output (.tiff)',
@@ -328,7 +328,7 @@ with row1_col2:
                 # m.addLayerControl()
                 st.write('Region:\n', curr_region)
                 st.write('Date: \n', date)
-                st.write('Water Level (m): \n', water_level)
+                # st.write('Water Level (m): \n', water_level)
         try:
             with open("output/output.tiff", 'rb') as f:
                 st.download_button('Download Latest Innudation Extent Output (.tiff)',
