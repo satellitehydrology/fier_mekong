@@ -1,7 +1,6 @@
 import folium
 import folium.plugins as plugins
 import streamlit as st
-from streamlit_folium import folium_static
 import xarray as xr
 from syn_sar import *
 import numpy.ma as ma
@@ -17,15 +16,8 @@ import geemap as gm
 import geemap.foliumap as geemap
 import ee
 
-
 def sheet_out(url):
     return url.replace("/edit#gid=", "/export?format=csv&gid=")
-
-def colorize(data, cmap='viridis'):
-    array = ma.masked_invalid(data)
-    normed_data = (array - array.min()) / (array.max() - array.min())
-    cm = plt.cm.get_cmap(cmap)
-    return cm(array)
 
 def generate_depth(flood):
     area = flood.geometry().bounds().buffer(1000).bounds()
@@ -80,14 +72,27 @@ def generate_depth(flood):
 
     return costDepthFilter
 
-# Page Configuration
-st.set_page_config(layout="wide")
-
 if 'AOI_str' not in st.session_state:
     st.session_state.AOI_str = 'LowerMekong'
 
-
-
+@st.cache()
+def get_wl(mode):
+    if mode == "Hindcast":
+        sheet_link = pd.read_csv('AOI/%s/wl_sheet_hindcast.txt'%(str(curr_region)), sep = '\t')
+        hindcast_wl = {}
+        for i in range(sheet_link.shape[0]):
+            station = pd.read_csv(sheet_out(sheet_link.iloc[i,1]), index_col=0).reset_index(drop = True)
+            station.iloc[:,0] = pd.to_datetime(station.iloc[:,0])
+            hindcast_wl[sheet_link.iloc[i,0]] = station
+        return hindcast_wl
+    if mode == "Forecast":
+        sheet_link = pd.read_csv('AOI/%s/wl_sheet.txt'%(str(curr_region)), sep = '\t')
+        forecast_wl = {}
+        for i in range(sheet_link.shape[0]):
+            station = pd.read_csv(sheet_out(sheet_link.iloc[i,1]))
+            station.iloc[:,0] = pd.to_datetime(station.iloc[:,0])
+            forecast_wl[sheet_link.iloc[i,0]] = station
+        return forecast_wl
 
 basemaps = {
     'Google Maps': folium.TileLayer(
@@ -117,6 +122,12 @@ basemaps = {
     ),
 }
 
+flood_color = {0: (0.75, 0.75, 0.75, 0.05),
+ 1: (0, 0, 0.543, 0.7),
+ }
+
+# Page Configuration
+st.set_page_config(layout="wide")
 # Title and Description
 st.title("Forecasting Inundation Extents using REOF Analysis (FIER)-Mekong")
 
@@ -136,27 +147,19 @@ with row1_col1:
     )
     basemaps['Google Terrain'].add_to(m)
     basemaps['Google Satellite Hybrid'].add_to(m)
-    # m.add_child(folium.LatLngPopup())
+    basemaps['Esri Ocean'].add_to(m)
     m.addLayerControl()
 
 with row1_col2:
     curr_region = st.session_state.AOI_str
-    # new_title = '<p style="font-family:sans-serif; color:Green; font-size: 42px;">Select Date</p>'
-    # st.markdown(new_title, unsafe_allow_html=True)
     st.subheader('Select Date')
     st.markdown('**AOI: %s**'%(curr_region))
     run_type = st.radio('Run type:', ('Hindcast', 'Forecast'))
 
-
-
     if run_type == 'Hindcast':
         with st.form("Run Hindcasted FIER"):
             sheet_link = pd.read_csv('AOI/%s/wl_sheet_hindcast.txt'%(str(curr_region)), sep = '\t')
-            hindcast_wl = {}
-            for i in range(sheet_link.shape[0]):
-                station = pd.read_csv(sheet_out(sheet_link.iloc[i,1]), index_col=0).reset_index(drop = True)
-                station.iloc[:,0] = pd.to_datetime(station.iloc[:,0])
-                hindcast_wl[sheet_link.iloc[i,0]] = station
+            hindcast_wl = get_wl("Hindcast")
 
             test = hindcast_wl[sheet_link.iloc[1,0]]
             min_date = test.iloc[0,0]
@@ -169,8 +172,8 @@ with row1_col2:
                  )
 
             depth = st.checkbox('Flood Depth Estimation')
-
             submitted = st.form_submit_button("Submit")
+
             if submitted:
                 hydrosite = pd.read_csv('AOI/%s/hydrosite.csv'%(str(curr_region)))
                 water_level = {}
@@ -192,20 +195,19 @@ with row1_col2:
                 basemaps['Google Satellite Hybrid'].add_to(m)
 
                 image_folder = image_output(curr_region, water_level)
-                # with xr.open_dataset(image_folder +'/output.nc',) as output:
-                    # bounds = [[output.lat.values.min(), output.lon.values.min()], [output.lat.values.max(), output.lon.values.max()]]
-                    # sar_image, z_score_image, water_map_image = output['Synthesized SAR Image'].values, output['Z-score Image'].values, output['Inundation Map'].values
+                with xr.open_dataset(image_folder +'/output.nc',) as output:
+                    bounds = [[output.lat.values.min(), output.lon.values.min()], [output.lat.values.max(), output.lon.values.max()]]
+                    sar_image, z_score_image, water_map_image = output['Synthesized SAR Image'].values, output['Z-score Image'].values, output['Inundation Map'].values
 
                 innudation_img = gm.netcdf_to_ee(image_folder +'/output.nc',  var_names = 'Inundation Map')
                 innudation_img = innudation_img.clip(ee.Image('users/sondo/output_test').geometry())
                 innudation_img = innudation_img.updateMask(innudation_img.gte(1));
 
-                flood_params = {'min': 0,'max': 1,'palette': ['red','#000072']}
-                # m.addLayer(innudation_img, flood_params, name = 'Innudation Extent',)
-                # m.centerObject(innudation_img)
-
                 if depth:
-                    m.addLayer(innudation_img, flood_params, name = 'Innudation Extent', shown = False)
+                    innudation_img = gm.netcdf_to_ee(image_folder +'/output.nc',  var_names = 'Inundation Map')
+                    innudation_img = innudation_img.clip(ee.Image('users/sondo/output_test').geometry())
+                    innudation_img = innudation_img.updateMask(innudation_img.gte(1));
+
                     costDepthFilter = generate_depth(innudation_img)
                     gm.ee_export_image(costDepthFilter, 'output/flood_depth.tif', )
                     costDepthFilter_viz = costDepthFilter.where(costDepthFilter.eq(0), 0)\
@@ -222,12 +224,28 @@ with row1_col2:
                     legend_keys_flood = ['0 meter (Estimated)','0 - 1 meter', '1 - 3 meters', '3 - 5 meters', '> 5 meters',]
                     legend_colors_flood = ['#FEF001','#FD9A01','#FD6104','#F00505','#542061']
                     m.add_legend(title = 'Flood Depth Estimation', labels=legend_keys_flood, colors=legend_colors_flood, control = True, layer_name = 'Flood Depth Estimation Using FwDet')
+
+                    water_map_image[np.isnan(water_map_image)] = 0
+                    folium.raster_layers.ImageOverlay(
+                        image = water_map_image,
+                        bounds = bounds,
+                        name = 'Inundation Map_' + curr_region ,
+                        colormap = lambda x: flood_color[x],
+                        show = False
+                    ).add_to(m)
+
                 else:
-                    m.addLayer(innudation_img, flood_params, name = 'Innudation Extent', shown = True)
-                # m.addLayerControl()
+                    water_map_image[np.isnan(water_map_image)] = 0
+                    folium.raster_layers.ImageOverlay(
+                        image = water_map_image,
+                        bounds = bounds,
+                        name = 'Inundation Map_' + curr_region ,
+                        colormap = lambda x: flood_color[x],
+                        show = True
+                    ).add_to(m)
+
                 st.write('Region:\n', curr_region)
                 st.write('Date: \n', date)
-                # st.write('Water Level (m): \n', water_level)
         try:
             with open("output/output.tiff", 'rb') as f:
                 st.download_button('Download Latest Innudation Extent Output (.tiff)',
@@ -249,29 +267,21 @@ with row1_col2:
     else:
         with st.form("Run Forecast FIER"):
             sheet_link = pd.read_csv('AOI/%s/wl_sheet.txt'%(str(curr_region)), sep = '\t')
-            forecast_wl = {}
-            for i in range(sheet_link.shape[0]):
-                station = pd.read_csv(sheet_out(sheet_link.iloc[i,1]))
-                station.iloc[:,0] = pd.to_datetime(station.iloc[:,0])
-                forecast_wl[sheet_link.iloc[i,0]] = station
+            forecast_wl = get_wl("Forecast")
 
             test = forecast_wl[sheet_link.iloc[0,0]]
             min_date = test.iloc[0,0]
             max_date = test.iloc[-1,0]
-
             date = st.date_input(
                  "Select Forecasted Date (%s to %s):"%(min_date.strftime("%Y/%m/%d"), max_date.strftime("%Y/%m/%d")),
                  value = min_date,
                  min_value = min_date,
                  max_value = max_date,
                  )
-
             depth = st.checkbox('Flood Depth Estimation')
 
             submitted = st.form_submit_button("Submit")
-
             if submitted:
-
                 hydrosite = pd.read_csv('AOI/%s/hydrosite.csv'%(str(curr_region)))
                 water_level = {}
                 for i in range(hydrosite.shape[0]):
@@ -292,20 +302,19 @@ with row1_col2:
                 basemaps['Google Satellite Hybrid'].add_to(m)
 
                 image_folder = image_output(curr_region, water_level)
-                # with xr.open_dataset(image_folder +'/output.nc',) as output:
-                    # bounds = [[output.lat.values.min(), output.lon.values.min()], [output.lat.values.max(), output.lon.values.max()]]
-                    # sar_image, z_score_image, water_map_image = output['Synthesized SAR Image'].values, output['Z-score Image'].values, output['Inundation Map'].values
+                with xr.open_dataset(image_folder +'/output.nc',) as output:
+                    bounds = [[output.lat.values.min(), output.lon.values.min()], [output.lat.values.max(), output.lon.values.max()]]
+                    sar_image, z_score_image, water_map_image = output['Synthesized SAR Image'].values, output['Z-score Image'].values, output['Inundation Map'].values
 
                 innudation_img = gm.netcdf_to_ee(image_folder +'/output.nc',  var_names = 'Inundation Map')
-                innudation_img = innudation_img .clip(ee.Image('users/sondo/output_test').geometry())
+                innudation_img = innudation_img.clip(ee.Image('users/sondo/output_test').geometry())
                 innudation_img = innudation_img.updateMask(innudation_img.gte(1));
 
-                flood_params = {'min': 0,'max': 1,'palette': ['red','#000072']}
-                # m.addLayer(innudation_img, flood_params, name = 'Innudation Extent',)
-                # m.centerObject(innudation_img)
-
                 if depth:
-                    m.addLayer(innudation_img, flood_params, name = 'Innudation Extent', shown = False)
+                    innudation_img = gm.netcdf_to_ee(image_folder +'/output.nc',  var_names = 'Inundation Map')
+                    innudation_img = innudation_img.clip(ee.Image('users/sondo/output_test').geometry())
+                    innudation_img = innudation_img.updateMask(innudation_img.gte(1));
+
                     costDepthFilter = generate_depth(innudation_img)
                     gm.ee_export_image(costDepthFilter, 'output/flood_depth.tif', )
                     costDepthFilter_viz = costDepthFilter.where(costDepthFilter.eq(0), 0)\
@@ -322,13 +331,28 @@ with row1_col2:
                     legend_keys_flood = ['0 meter (Estimated)','0 - 1 meter', '1 - 3 meters', '3 - 5 meters', '> 5 meters',]
                     legend_colors_flood = ['#FEF001','#FD9A01','#FD6104','#F00505','#542061']
                     m.add_legend(title = 'Flood Depth Estimation', labels=legend_keys_flood, colors=legend_colors_flood, control = True, layer_name = 'Flood Depth Estimation Using FwDet')
-                else:
-                    m.addLayer(innudation_img, flood_params, name = 'Innudation Extent', shown = True)
 
-                # m.addLayerControl()
+                    water_map_image[np.isnan(water_map_image)] = 0
+                    folium.raster_layers.ImageOverlay(
+                        image = water_map_image,
+                        bounds = bounds,
+                        name = 'Inundation Map_' + curr_region ,
+                        colormap = lambda x: flood_color[x],
+                        show = False
+                    ).add_to(m)
+
+                else:
+                    water_map_image[np.isnan(water_map_image)] = 0
+                    folium.raster_layers.ImageOverlay(
+                        image = water_map_image,
+                        bounds = bounds,
+                        name = 'Inundation Map_' + curr_region ,
+                        colormap = lambda x: flood_color[x],
+                        show = True
+                    ).add_to(m)
+
                 st.write('Region:\n', curr_region)
                 st.write('Date: \n', date)
-                # st.write('Water Level (m): \n', water_level)
         try:
             with open("output/output.tiff", 'rb') as f:
                 st.download_button('Download Latest Innudation Extent Output (.tiff)',
