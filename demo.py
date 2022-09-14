@@ -83,7 +83,7 @@ def generate_depth(flood):
 if 'AOI_str' not in st.session_state:
     st.session_state.AOI_str = 'LowerMekong'
 
-@st.cache()
+@st.cache(ttl = 3000)
 def get_wl(mode):
     if mode == "Hindcast":
         sheet_link = pd.read_csv('AOI/%s/wl_sheet_hindcast.txt'%(str(curr_region)), sep = '\t')
