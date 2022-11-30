@@ -333,7 +333,7 @@ with row1_col2:
                     m.addLayer(costDepthFilter_viz, depth_params, name = "Flood Depth Estimation Using FwDet")
                     legend_keys_flood = ['0 meter (Estimated)','0 - 1 meter', '1 - 3 meters', '3 - 5 meters', '> 5 meters',]
                     legend_colors_flood = ['#FEF001','#FD9A01','#FD6104','#F00505','#542061']
-                    m.add_legend(title = 'Flood Depth Estimation', labels=legend_keys_flood, colors=legend_colors_flood, layer_name = 'Flood Depth Estimation Using FwDet')
+#                     m.add_legend(title = 'Flood Depth Estimation', labels=legend_keys_flood, colors=legend_colors_flood, layer_name = 'Flood Depth Estimation Using FwDet')
 
                     water_map_image[np.isnan(water_map_image)] = 0
                     folium.raster_layers.ImageOverlay(
