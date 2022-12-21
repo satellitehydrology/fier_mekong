@@ -7,12 +7,12 @@ import xarray as xr
 import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.colors
+import pandas as pd
 
 root_output_folder = 'AOI/'
 
 def tpc_predict(region, site, mode, value):
     tpc_mode = '%s/TF_model/500m/site-%s_tpc%s'%(str(region), str(site), str(mode).zfill(2))
-
     in_model = models.load_model(root_output_folder + tpc_mode)
 
     return in_model.predict([value])[0][0]
@@ -21,6 +21,7 @@ def synthesize_sar(region, water_level,):
 
     sm_mode = '%s/RSM/500m/RSM_hydro.nc'%(region)
     RSM = xr.open_dataset(root_output_folder + sm_mode)
+    df_cv_results= pd.read_excel(root_output_folder + '%s/TF_model/500m/'%(str(region)) + 'GridsearchCV_results.xlsx', index_col=0)
 
     for ct_mode in range(len(RSM.mode.values)):
 
@@ -30,7 +31,7 @@ def synthesize_sar(region, water_level,):
         mode = ct_mode + 1
         value = float(water_level[site])
 
-        est_tpc = tpc_predict(region, site, ct_mode + 1, value)
+        est_tpc = tpc_predict(region, site, ct_mode + 1, value)*df_cv_results.RTPC_std[ct_mode]+df_cv_results.RTPC_mean[ct_mode]
         if ct_mode == 0:
             syn_sar = sm*est_tpc
         else:
