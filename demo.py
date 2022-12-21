@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import datetime
 from PIL import Image
 
-# from osgeo import gdal
+from osgeo import gdal
 
 import rioxarray as rio
 import geemap as gm
@@ -83,7 +83,7 @@ def generate_depth(flood):
 if 'AOI_str' not in st.session_state:
     st.session_state.AOI_str = 'LowerMekong'
 
-@st.cache(ttl = 43200)
+@st.cache(ttl = 3600)
 def get_wl(mode):
     if mode == "Hindcast":
         sheet_link = pd.read_csv('AOI/%s/wl_sheet_hindcast.txt'%(str(curr_region)), sep = '\t')
@@ -136,7 +136,6 @@ flood_color = {0: (0.75, 0.75, 0.75, 0.05),
 
 # Page Configuration
 st.set_page_config(layout="wide")
-# Title and Description
 st.title("Forecasting Inundation Extents using REOF Analysis (FIER)-Mekong")
 
 row1_col1, row1_col2 = st.columns([2, 1])
@@ -155,9 +154,9 @@ with row1_col1:
 
 with row1_col2:
     curr_region = st.session_state.AOI_str
-    st.subheader('Select Date')
-    st.markdown('**AOI: %s**'%(curr_region))
-    run_type = st.radio('Run type:', ('Hindcast', 'Forecast'))
+    st.header('Select Date')
+    st.subheader('**AOI: %s**'%(curr_region))
+    run_type = st.radio('**Run type**:', ('Hindcast', 'Forecast'))
 
     if run_type == 'Hindcast':
         with st.form("Run Hindcasted FIER"):
@@ -168,7 +167,7 @@ with row1_col2:
             min_date = test.iloc[0,0]
             max_date = test.iloc[-1,0]
             date = st.date_input(
-                 "Select Hindcasted Date (2008-01-01 to %s):"%(str(max_date)[:10]),
+                 label = "Select Hindcasted Date: **:red[(2008-01-01 to %s)]**"%(str(max_date)[:10]),
                  value = datetime.date(2018, 10, 17),
                  min_value = min_date,
                  max_value = max_date,
@@ -247,8 +246,8 @@ with row1_col2:
                         show = True
                     ).add_to(m)
 
-                st.write('Region:\n', curr_region)
-                st.write('Date: \n', date)
+                # st.write('Region:\n', curr_region)
+                # st.write('Date: \n', date)
         try:
             with open("output/output.tiff", 'rb') as f:
                 st.download_button('Download Latest Innudation Extent Output (.tiff)',
@@ -276,7 +275,7 @@ with row1_col2:
             min_date = test.iloc[0,0]
             max_date = test.iloc[-1,0]
             date = st.date_input(
-                 "Select Forecasted Date (%s to %s):"%(min_date.strftime("%Y/%m/%d"), max_date.strftime("%Y/%m/%d")),
+                 "Select Forecasted Date: **:red[(%s to %s)]**"%(min_date.strftime("%Y/%m/%d"), max_date.strftime("%Y/%m/%d")),
                  value = min_date,
                  min_value = min_date,
                  max_value = max_date,
