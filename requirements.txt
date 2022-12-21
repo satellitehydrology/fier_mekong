@@ -7,6 +7,6 @@ tensorflow
 openpyxl
 rioxarray
 --find-links=https://girder.github.io/large_image_wheels GDAL
-geemap
+geemap == 0.15.4
 localtileserver
-leafmap
+leafmap == 0.10.2
