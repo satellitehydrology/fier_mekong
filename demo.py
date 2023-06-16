@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import datetime
 from PIL import Image
 
-from osgeo import gdal
+# from osgeo import gdal
 
 import rioxarray as rio
 import geemap as gm
