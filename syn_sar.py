@@ -8,11 +8,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.colors
 import pandas as pd
+import joblib
 
 root_output_folder = 'AOI/'
 
 def tpc_predict(region, site, mode, value):
-    tpc_mode = '%s/TF_model/500m/site-%s_tpc%s'%(str(region), str(site), str(mode).zfill(2))
+    tpc_mode = '%s/TF_model/500m/site-%s_tpc%s.h5'%(str(region), str(site), str(mode).zfill(2))
     in_model = models.load_model(root_output_folder + tpc_mode)
 
     return in_model.predict([value])[0][0]
@@ -23,6 +24,8 @@ def synthesize_sar(region, water_level,):
     RSM = xr.open_dataset(root_output_folder + sm_mode)
     df_cv_results= pd.read_excel(root_output_folder + '%s/TF_model/500m/'%(str(region)) + 'GridsearchCV_results.xlsx', index_col=0)
 
+    water_level_list = []
+    est_tpc_list = []
     for ct_mode in range(len(RSM.mode.values)):
 
         sm = RSM.spatial_modes.values[:,:,ct_mode]
@@ -30,8 +33,10 @@ def synthesize_sar(region, water_level,):
         site = str(RSM.hydro_site.sel(mode = ct_mode + 1).values)
         mode = ct_mode + 1
         value = float(water_level[site])
+        water_level_list.append(value)
 
         est_tpc = tpc_predict(region, site, ct_mode + 1, value)*df_cv_results.RTPC_std[ct_mode]+df_cv_results.RTPC_mean[ct_mode]
+        est_tpc_list.append(est_tpc)
         if ct_mode == 0:
             syn_sar = sm*est_tpc
         else:
@@ -44,7 +49,11 @@ def synthesize_sar(region, water_level,):
     syn_sar = syn_sar + all_meanVV
 
     # Z-score
-    zscore_threshold = -3
+    water_level_list = np.array(water_level_list).reshape(1,-1)
+    loaded_model = joblib.load('h2zscore_svm_model_n3_0_i0.01.sav')
+    zscore_threshold = loaded_model.predict(water_level_list)
+    
+    #zscore_threshold = -3
 
     dry_meanVV_dir = '%s/stats_img/500m/dry_meanVV.nc'%(region)
     dry_meanVV = xr.open_dataset(root_output_folder + dry_meanVV_dir)
