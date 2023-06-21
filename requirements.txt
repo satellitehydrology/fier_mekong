@@ -10,3 +10,5 @@ rioxarray
 geemap == 0.15.4
 localtileserver
 leafmap == 0.10.2
+scikit-learn
+joblib
