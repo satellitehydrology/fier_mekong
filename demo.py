@@ -384,8 +384,9 @@ with row1_col1:
     # folium_static(m, height = 600, width = 900)
     url = "https://www.sciencedirect.com/science/article/pii/S0034425720301024?casa_token=kOYlVMMWkBUAAAAA:fiFM4l6BUzJ8xTCksYUe7X4CcojddbO8ybzOSMe36f2cFWEXDa_aFHaGeEFlN8SuPGnDy7Ir8w"
     url_2 = "https://www.sciencedirect.com/science/article/abs/pii/S1364815218306194"
-    url_3 = "https://ieeexplore.ieee.org/abstract/document/9242297?casa_token=N4ao38AI93gAAAAA:XpEdirsJfsPByzd3no7JLEcrYxXcBVKd3Eu7M65dtg0iLE3XF-zgw65J4mN26QOt-C62jl6zeg"
+    url_3 = "https://www.sciencedirect.com/science/article/abs/pii/S1364815223000294"
+    url_4 = "https://ieeexplore.ieee.org/abstract/document/9242297?casa_token=N4ao38AI93gAAAAA:XpEdirsJfsPByzd3no7JLEcrYxXcBVKd3Eu7M65dtg0iLE3XF-zgw65J4mN26QOt-C62jl6zeg"
 
     st.caption("This app has been developed by Chi-Hung Chang  & Son Do at University of Houston with supports from NASA SERVIR and GEOGloWS.")
     st.caption("Kel Markert at SERVIR Coordination Office is also acknowledged for the development of this FIER-Mekong App.")
-    st.caption("Reference: [Chang et al., 2019](%s), [Chang et al., 2020](%s), [Peter et al., 2020](%s)" %(url_2, url, url_3))
+    st.caption("Reference: [Chang et al., 2019](%s), [Chang et al., 2020](%s), [Chang et al., 2023](%s), [Peter et al., 2020](%s)" %(url_2, url, url_3, url_4))
