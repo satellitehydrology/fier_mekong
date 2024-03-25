@@ -15,8 +15,6 @@ root_output_folder = 'AOI/'
 def tpc_predict(region, site, mode, value):
     tpc_mode = '%s/TF_model/500m/site-%s_tpc%s.h5'%(str(region), str(site), str(mode).zfill(2))
     in_model = models.load_model(root_output_folder + tpc_mode)
-
-    print(in_model.predict([value])[0][0])
     
     return in_model.predict([value])[0][0]
     #print('t',value)
@@ -49,7 +47,7 @@ def synthesize_sar(region, water_level,):
             syn_sar = sm*est_tpc
         else:
             syn_sar = syn_sar + sm*est_tpc
-
+            
     all_meanVV_dir = '%s/stats_img/500m/all_meanVV.nc'%(region)
     all_meanVV = xr.open_dataset(root_output_folder + all_meanVV_dir)
     all_meanVV = all_meanVV.to_array().values[0,:,:]
@@ -87,6 +85,8 @@ def synthesize_sar(region, water_level,):
     # water_map = z_score_img.copy()
     # water_map[z_score_img < zscore_threshold] = 1
     # water_map[z_score_img >= zscore_threshold] = 0
+
+    print(syn_sar.shape, water_map.shape)
 
     RSM.close()
 
