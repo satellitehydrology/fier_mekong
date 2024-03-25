@@ -16,7 +16,8 @@ def tpc_predict(region, site, mode, value):
     tpc_mode = '%s/TF_model/500m/site-%s_tpc%s.h5'%(str(region), str(site), str(mode).zfill(2))
     in_model = models.load_model(root_output_folder + tpc_mode)
 
-    return in_model.predict([value])[0][0]
+    #return in_model.predict([value])[0][0]
+    return in_model.predict(value)[0][0]
 
 def synthesize_sar(region, water_level,):
 
