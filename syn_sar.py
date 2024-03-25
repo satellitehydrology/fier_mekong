@@ -86,7 +86,7 @@ def synthesize_sar(region, water_level,):
     # water_map[z_score_img < zscore_threshold] = 1
     # water_map[z_score_img >= zscore_threshold] = 0
 
-    print(syn_sar.shape, water_map.shape)
+    #print(syn_sar.shape, water_map.shape)
 
     RSM.close()
 
@@ -142,6 +142,11 @@ def image_output(region, water_level):
 
     nc_file = xr.open_dataset('output/output.nc')
     innudation_map = nc_file['Inundation Map']
+
+    plt.imshow(innudation_map)
+    plt.savefig("output/output.jpg")
+    plt.close()
+    
     innudation_map = innudation_map.rio.set_spatial_dims('lon', 'lat')
     innudation_map.rio.set_crs("epsg:4326")
     innudation_map.rio.to_raster("output/output.tiff")
