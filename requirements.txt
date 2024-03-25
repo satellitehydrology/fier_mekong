@@ -1,9 +1,9 @@
-streamlit==1.31.0
+streamlit
 streamlit-folium
 xarray
 matplotlib
 netcdf4
-tensorflow
+tensorflow==2.15
 openpyxl
 rioxarray
 --find-links=https://girder.github.io/large_image_wheels GDAL
