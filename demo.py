@@ -195,8 +195,6 @@ with row1_col2:
                 basemaps['Esri Ocean'].add_to(m)
                 basemaps['Google Terrain'].add_to(m)
                 basemaps['Google Satellite Hybrid'].add_to(m)
-
-                print(water_level)
                 
                 image_folder = image_output(curr_region, water_level)
                 with xr.open_dataset(image_folder +'/output.nc',) as output:
