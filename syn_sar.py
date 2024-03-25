@@ -35,6 +35,8 @@ def synthesize_sar(region, water_level,):
         value = float(water_level[site])
         water_level_list.append(value)
 
+        print(value)
+        
         est_tpc = tpc_predict(region, site, ct_mode + 1, value)*df_cv_results.RTPC_std[ct_mode]+df_cv_results.RTPC_mean[ct_mode]
         est_tpc_list.append(est_tpc)
         if ct_mode == 0:
