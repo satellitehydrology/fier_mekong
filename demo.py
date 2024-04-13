@@ -15,7 +15,6 @@ import rioxarray as rio
 import geemap as gm
 import geemap.foliumap as geemap
 import ee
-import syn_sar.image_output as image_output
 
 # Reset Output folder
 dir = 'output'
