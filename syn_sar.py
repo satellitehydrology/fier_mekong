@@ -9,7 +9,7 @@ import numpy as np
 import matplotlib.colors
 import pandas as pd
 import joblib
-
+import streamlit as st
 root_output_folder = 'AOI/'
 
 def tpc_predict(region, site, mode, value):
