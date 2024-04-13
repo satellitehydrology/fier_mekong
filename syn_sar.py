@@ -152,6 +152,6 @@ def image_output(region, water_level):
     innudation_map.rio.to_raster("output/output.tiff")
     nc_file.close()
     
-    os.listdir(output)
+    os.listdir('output')
     st.write("app save img!!!!!!!!!!!!!!!!!!!!!")##########
     return folder_name
