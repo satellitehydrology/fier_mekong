@@ -195,7 +195,8 @@ with row1_col2:
                 basemaps['Esri Ocean'].add_to(m)
                 basemaps['Google Terrain'].add_to(m)
                 basemaps['Google Satellite Hybrid'].add_to(m)
-                
+
+                st.write("app save img start!!!!!!!!!!!!!!!!!!!!!")##########
                 image_folder = image_output(curr_region, water_level)
                 with xr.open_dataset(image_folder +'/output.nc',) as output:
                     bounds = [[output.lat.values.min(), output.lon.values.min()], [output.lat.values.max(), output.lon.values.max()]]
@@ -303,6 +304,7 @@ with row1_col2:
                 basemaps['Google Terrain'].add_to(m)
                 basemaps['Google Satellite Hybrid'].add_to(m)
 
+                st.write("app save img start!!!!!!!!!!!!!!!!!!!!!")##########
                 image_folder = image_output(curr_region, water_level)
                 with xr.open_dataset(image_folder +'/output.nc',) as output:
                     bounds = [[output.lat.values.min(), output.lon.values.min()], [output.lat.values.max(), output.lon.values.max()]]
