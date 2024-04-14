@@ -201,14 +201,12 @@ with row1_col2:
                 basemaps['Google Terrain'].add_to(m)
                 basemaps['Google Satellite Hybrid'].add_to(m)
 
-                st.write("app save img start!!!!!!!!!!!!!!!!!!!!!")##########
                 image_folder = image_output(curr_region, water_level)
                 with xr.open_dataset(image_folder +'/output.nc',) as output:
                     bounds = [[output.lat.values.min(), output.lon.values.min()], [output.lat.values.max(), output.lon.values.max()]]
                     sar_image, z_score_image, water_map_image = output['Synthesized SAR Image'].values, output['Z-score Image'].values, output['Inundation Map'].values
                 
                 innudation_img = gm.netcdf_to_ee(image_folder +'/output.nc',  var_names = 'Inundation Map')
-                st.write(innudation_img)
                 innudation_img = innudation_img.clip(ee.Image('users/sondo/output_test').geometry())
                 innudation_img = innudation_img.updateMask(innudation_img.gte(1));
 
@@ -310,14 +308,12 @@ with row1_col2:
                 basemaps['Google Terrain'].add_to(m)
                 basemaps['Google Satellite Hybrid'].add_to(m)
 
-                st.write("app save img start!!!!!!!!!!!!!!!!!!!!!")##########
                 image_folder = image_output(curr_region, water_level)
                 with xr.open_dataset(image_folder +'/output.nc',) as output:
                     bounds = [[output.lat.values.min(), output.lon.values.min()], [output.lat.values.max(), output.lon.values.max()]]
                     sar_image, z_score_image, water_map_image = output['Synthesized SAR Image'].values, output['Z-score Image'].values, output['Inundation Map'].values
 
                 innudation_img = gm.netcdf_to_ee(image_folder +'/output.nc',  var_names = 'Inundation Map')
-                st.write(innudation_img)
                 innudation_img = innudation_img.clip(ee.Image('users/sondo/output_test').geometry())
                 innudation_img = innudation_img.updateMask(innudation_img.gte(1));
 
