@@ -15,7 +15,7 @@ import rioxarray as rio
 import geemap as gm
 import geemap.foliumap as geemap
 import ee
-ee.Authenticate()
+
 # Reset Output folder
 dir = 'output'
 if os.path.isdir(dir):
