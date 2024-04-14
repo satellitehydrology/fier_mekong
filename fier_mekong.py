@@ -130,7 +130,6 @@ def app():
     row1_col1, row1_col2 = st.columns([2, 1])
     # Set up Geemap
     with row1_col1:
-        ee.Authenticate()
         if st.session_state.AOI_str == None:
             m = geemap.Map(
             zoom=5,
