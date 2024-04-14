@@ -21,8 +21,6 @@ def tpc_predict(region, site, mode, value):
     #return in_model.predict(np.array(value))[0][0]
 
 def synthesize_sar(region, water_level,):
-
-    print(water_level)
     
     sm_mode = '%s/RSM/500m/RSM_hydro.nc'%(region)
     RSM = xr.open_dataset(root_output_folder + sm_mode)
@@ -151,11 +149,7 @@ def image_output(region, water_level):
     innudation_map.rio.set_crs("epsg:4326")
     innudation_map.rio.to_raster("output/output.tiff")
     
-    print(nc_file)
-    st.write(nc_file)
     nc_file.close()
 
     
-    
-    st.write("app save img!!!!!!!!!!!!!!!!!!!!!")##########
     return folder_name
