@@ -141,6 +141,7 @@ st.title("Forecasting Inundation Extents using REOF Analysis (FIER)-Mekong")
 row1_col1, row1_col2 = st.columns([2, 1])
 # Set up Geemap
 with row1_col1:
+    ee.Authenticate()
     m = geemap.Map(
     zoom=7,
     center=(12.02 , 104.81),
