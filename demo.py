@@ -141,7 +141,6 @@ st.title("Forecasting Inundation Extents using REOF Analysis (FIER)-Mekong")
 row1_col1, row1_col2 = st.columns([2, 1])
 # Set up Geemap
 with row1_col1:
-    ee.Authenticate()
     m = geemap.Map(
     zoom=7,
     center=(12.02 , 104.81),
@@ -202,7 +201,7 @@ with row1_col2:
                 with xr.open_dataset(image_folder +'/output.nc',) as output:
                     bounds = [[output.lat.values.min(), output.lon.values.min()], [output.lat.values.max(), output.lon.values.max()]]
                     sar_image, z_score_image, water_map_image = output['Synthesized SAR Image'].values, output['Z-score Image'].values, output['Inundation Map'].values
-
+                ee.Authenticate()
                 innudation_img = gm.netcdf_to_ee(image_folder +'/output.nc',  var_names = 'Inundation Map')
                 st.write(innudation_img)
                 innudation_img = innudation_img.clip(ee.Image('users/sondo/output_test').geometry())
