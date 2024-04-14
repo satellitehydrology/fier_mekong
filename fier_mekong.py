@@ -115,6 +115,7 @@ basemaps = {
 }
 
 def app():
+    ee.Authenticate()
     # Title and Description
     st.title("Forecasting Inundation Extents using REOF Analysis (FIER)-Mekong")
 
