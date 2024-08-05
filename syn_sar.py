@@ -75,7 +75,7 @@ def synthesize_sar(region, water_level,):
 
 
     dry_stdVV_dir = '%s/stats_img/500m/dry_stdVV.nc'%(region)
-    dry_stdVV = xr.open_dataset(root_output_folder + dry_stdVV_dir)
+    dry_stdVV = xr.open_dataset(root_output_folder + dry_stdVV_dir, engine="h5netcdf")
     dry_stdVV = dry_stdVV.to_array().values[0,:,:]
 
     z_score_img = (syn_sar-dry_meanVV)/dry_stdVV
@@ -127,7 +127,7 @@ def image_output(region, water_level):
 
     # Make nc file:
     all_meanVV_dir = '%s/stats_img/500m/all_meanVV.nc'%(region)
-    all_meanVV = xr.open_dataset(root_output_folder + all_meanVV_dir)
+    all_meanVV = xr.open_dataset(root_output_folder + all_meanVV_dir, engine="h5netcdf")
     
     out_file = xr.Dataset(
         {
