@@ -29,7 +29,7 @@ def synthesize_sar(region, water_level,):
     st.write(str(root_output_folder + sm_mode))
     
     d = h5py.File(root_output_folder + sm_mode, 'r')
-    st.write(str(d))
+    st.write(str(d.keys()))
     d.close
     
     RSM = xr.load_dataset(root_output_folder + sm_mode)
