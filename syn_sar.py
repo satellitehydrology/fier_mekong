@@ -118,7 +118,7 @@ def image_output(region, water_level):
     # Make nc file:
     all_meanVV_dir = '%s/stats_img/500m/all_meanVV.nc'%(region)
     all_meanVV = xr.open_dataset(root_output_folder + all_meanVV_dir)
-    st.write(all_meanVV)
+    st.write(str(all_meanVV))
     out_file = xr.Dataset(
         {
             "Synthesized SAR Image": (
