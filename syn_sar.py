@@ -27,7 +27,8 @@ def synthesize_sar(region, water_level,):
     
     sm_mode = '%s/RSM/500m/RSM_hydro.nc'%(region)
     st.write(str(root_output_folder + sm_mode))
-    
+
+    st.write(os.listdir('/home/adminuser/venv/lib/python3.9/site-packages/xarray/backends'))
     d = h5py.File(root_output_folder + sm_mode, 'r')
     st.write(str(d.keys()))
     d.close
