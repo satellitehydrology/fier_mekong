@@ -33,7 +33,7 @@ def synthesize_sar(region, water_level,):
     st.write(str(d.keys()))
     d.close
     
-    RSM = xr.load_dataset(root_output_folder + sm_mode, engine="h5netcdf")
+    RSM = xr.open_dataset(root_output_folder + sm_mode, engine="h5netcdf")
     df_cv_results= pd.read_excel(root_output_folder + '%s/TF_model/500m/'%(str(region)) + 'GridsearchCV_results.xlsx', index_col=0)
 
     water_level_list = []
