@@ -202,7 +202,7 @@ with row1_col2:
                 basemaps['Google Satellite Hybrid'].add_to(m)
 
                 image_folder = image_output(curr_region, water_level)
-                with xr.open_dataset(image_folder +'/output.nc',) as output:
+                with xr.open_dataset(image_folder +'/output.nc', engine="h5netcdf") as output:
                     bounds = [[output.lat.values.min(), output.lon.values.min()], [output.lat.values.max(), output.lon.values.max()]]
                     sar_image, z_score_image, water_map_image = output['Synthesized SAR Image'].values, output['Z-score Image'].values, output['Inundation Map'].values
                 
@@ -309,7 +309,7 @@ with row1_col2:
                 basemaps['Google Satellite Hybrid'].add_to(m)
 
                 image_folder = image_output(curr_region, water_level)
-                with xr.open_dataset(image_folder +'/output.nc',) as output:
+                with xr.open_dataset(image_folder +'/output.nc', engine="h5netcdf") as output:
                     bounds = [[output.lat.values.min(), output.lon.values.min()], [output.lat.values.max(), output.lon.values.max()]]
                     sar_image, z_score_image, water_map_image = output['Synthesized SAR Image'].values, output['Z-score Image'].values, output['Inundation Map'].values
 
