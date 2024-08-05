@@ -10,6 +10,7 @@ import matplotlib.colors
 import pandas as pd
 import joblib
 import streamlit as st
+from netCDF4 import Dataset
 root_output_folder = 'AOI/'
 
 def tpc_predict(region, site, mode, value):
@@ -24,8 +25,10 @@ def synthesize_sar(region, water_level,):
     
     sm_mode = '%s/RSM/500m/RSM_hydro.nc'%(region)
     st.write(str(root_output_folder + sm_mode))
-    st.write(str(os.path.isfile(root_output_folder + sm_mode)))
-    RSM = xr.load_dataset(root_output_folder + sm_mode, format = "NETCDF4", engine = "netcdf4")
+    d = Dataset(root_output_folder + sm_mode, 'r')
+    st.write(str(d)))
+    d.close
+    RSM = xr.load_dataset(root_output_folder + sm_mode)
     df_cv_results= pd.read_excel(root_output_folder + '%s/TF_model/500m/'%(str(region)) + 'GridsearchCV_results.xlsx', index_col=0)
 
     water_level_list = []
