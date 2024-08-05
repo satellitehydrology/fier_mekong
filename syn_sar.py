@@ -49,7 +49,7 @@ def synthesize_sar(region, water_level,):
     all_meanVV_dir = '%s/stats_img/500m/all_meanVV.nc'%(region)
     all_meanVV = xr.open_dataset(root_output_folder + all_meanVV_dir)
     all_meanVV = all_meanVV.to_array().values[0,:,:]
-    st.write(all_meanVV)
+    
     syn_sar = syn_sar + all_meanVV
     
     # Z-score
@@ -118,6 +118,7 @@ def image_output(region, water_level):
     # Make nc file:
     all_meanVV_dir = '%s/stats_img/500m/all_meanVV.nc'%(region)
     all_meanVV = xr.open_dataset(root_output_folder + all_meanVV_dir)
+    st.write(all_meanVV)
     out_file = xr.Dataset(
         {
             "Synthesized SAR Image": (
