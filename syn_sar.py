@@ -57,7 +57,7 @@ def synthesize_sar(region, water_level,):
             syn_sar = syn_sar + sm*est_tpc
             
     all_meanVV_dir = '%s/stats_img/500m/all_meanVV.nc'%(region)
-    all_meanVV = xr.open_dataset(root_output_folder + all_meanVV_dir)
+    all_meanVV = xr.open_dataset(root_output_folder + all_meanVV_dir, engine="h5netcdf")
     all_meanVV = all_meanVV.to_array().values[0,:,:]
     
     syn_sar = syn_sar + all_meanVV
