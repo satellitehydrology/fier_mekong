@@ -3,6 +3,7 @@ streamlit-folium
 xarray
 matplotlib
 netcdf4
+h5py
 tensorflow==2.15
 openpyxl
 rioxarray
