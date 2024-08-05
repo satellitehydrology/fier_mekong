@@ -1,3 +1,5 @@
+import os 
+import shutil
 import folium
 import folium.plugins as plugins
 import streamlit as st
@@ -12,6 +14,10 @@ from PIL import Image
 # from osgeo import gdal
 
 import rioxarray as rio
+if os.path.isfile('/home/adminuser/venv/lib/python3.9/site-packages/geemap/common.py'):
+    os.remove('/home/adminuser/venv/lib/python3.9/site-packages/geemap/common.py')
+shutil.copy2('common.py','/home/adminuser/venv/lib/python3.9/site-packages/geemap/common.py')
+
 import geemap as gm
 import geemap.foliumap as geemap
 import ee
@@ -206,12 +212,12 @@ with row1_col2:
                     bounds = [[output.lat.values.min(), output.lon.values.min()], [output.lat.values.max(), output.lon.values.max()]]
                     sar_image, z_score_image, water_map_image = output['Synthesized SAR Image'].values, output['Z-score Image'].values, output['Inundation Map'].values
                 
-                innudation_img = gm.netcdf_to_ee(image_folder +'/output.nc',  var_names = 'Inundation Map', engine="h5netcdf")
+                innudation_img = gm.netcdf_to_ee(image_folder +'/output.nc',  var_names = 'Inundation Map')
                 innudation_img = innudation_img.clip(ee.Image('users/sondo/output_test').geometry())
                 innudation_img = innudation_img.updateMask(innudation_img.gte(1));
 
                 if depth:
-                    innudation_img = gm.netcdf_to_ee(image_folder +'/output.nc',  var_names = 'Inundation Map')
+                    #innudation_img = gm.netcdf_to_ee(image_folder +'/output.nc',  var_names = 'Inundation Map')
                     innudation_img = innudation_img.clip(ee.Image('users/sondo/output_test').geometry())
                     innudation_img = innudation_img.updateMask(innudation_img.gte(1));
 
