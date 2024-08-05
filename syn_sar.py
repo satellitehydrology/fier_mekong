@@ -70,7 +70,7 @@ def synthesize_sar(region, water_level,):
     #zscore_threshold = -3
 
     dry_meanVV_dir = '%s/stats_img/500m/dry_meanVV.nc'%(region)
-    dry_meanVV = xr.open_dataset(root_output_folder + dry_meanVV_dir)
+    dry_meanVV = xr.open_dataset(root_output_folder + dry_meanVV_dir, engine="h5netcdf")
     dry_meanVV = dry_meanVV.to_array().values[0,:,:]
 
 
