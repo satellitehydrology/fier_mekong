@@ -49,9 +49,9 @@ def synthesize_sar(region, water_level,):
     all_meanVV_dir = '%s/stats_img/500m/all_meanVV.nc'%(region)
     all_meanVV = xr.open_dataset(root_output_folder + all_meanVV_dir)
     all_meanVV = all_meanVV.to_array().values[0,:,:]
-
+    st.write(all_meanVV)
     syn_sar = syn_sar + all_meanVV
-
+    
     # Z-score
     water_level_list = np.array(water_level_list).reshape(1,-1)
     loaded_model = joblib.load('h2zscore_svm_model_n3_0_i0.01.sav')
@@ -137,7 +137,7 @@ def image_output(region, water_level):
     )
     all_meanVV.close()
     out_file.to_netcdf(folder_name +'/output.nc')
-
+    
     nc_file = xr.open_dataset('output/output.nc')
     innudation_map = nc_file['Inundation Map']
 
