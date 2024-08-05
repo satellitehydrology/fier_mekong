@@ -23,6 +23,7 @@ def tpc_predict(region, site, mode, value):
 def synthesize_sar(region, water_level,):
     
     sm_mode = '%s/RSM/500m/RSM_hydro.nc'%(region)
+    st.write(str(root_output_folder + sm_mode))
     RSM = xr.open_dataset(root_output_folder + sm_mode)
     df_cv_results= pd.read_excel(root_output_folder + '%s/TF_model/500m/'%(str(region)) + 'GridsearchCV_results.xlsx', index_col=0)
 
@@ -118,7 +119,7 @@ def image_output(region, water_level):
     # Make nc file:
     all_meanVV_dir = '%s/stats_img/500m/all_meanVV.nc'%(region)
     all_meanVV = xr.open_dataset(root_output_folder + all_meanVV_dir)
-    st.write(str(all_meanVV))
+    
     out_file = xr.Dataset(
         {
             "Synthesized SAR Image": (
