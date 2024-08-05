@@ -3,6 +3,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 from tensorflow.keras import models
 import tensorflow as tf
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+import h5py
 import xarray as xr
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,7 +12,7 @@ import pandas as pd
 import joblib
 import streamlit as st
 from netCDF4 import Dataset
-import h5py
+
 root_output_folder = 'AOI/'
 
 def tpc_predict(region, site, mode, value):
