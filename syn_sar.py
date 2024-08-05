@@ -147,9 +147,9 @@ def image_output(region, water_level):
         coords = all_meanVV.coords,
     )
     all_meanVV.close()
-    out_file.to_netcdf(folder_name +'/output.nc')
+    out_file.to_netcdf(folder_name +'/output.nc', engine="h5netcdf")
     
-    nc_file = xr.open_dataset('output/output.nc')
+    nc_file = xr.open_dataset('output/output.nc', engine="h5netcdf")
     innudation_map = nc_file['Inundation Map']
 
     plt.imshow(innudation_map)
