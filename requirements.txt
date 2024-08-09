@@ -9,7 +9,7 @@ tensorflow==2.15
 openpyxl
 rioxarray
 --find-links=https://girder.github.io/large_image_wheels GDAL
-pip install git+https://github.com/Hung-HsienWan/geemap/tree/master/geemap.git
+pip install git+https://github.com/Hung-HsienWan/geemap.git
 localtileserver
 scikit-learn
 joblib
