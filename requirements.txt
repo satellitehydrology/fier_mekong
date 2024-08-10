@@ -10,7 +10,7 @@ openpyxl
 rioxarray
 --find-links=https://girder.github.io/large_image_wheels
 GDAL
-git+https://github.com/Hung-HsienWan/geemap.git@master
+geemap
 localtileserver
 scikit-learn
 joblib
