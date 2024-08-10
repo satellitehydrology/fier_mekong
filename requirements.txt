@@ -8,7 +8,8 @@ h5py
 tensorflow==2.15
 openpyxl
 rioxarray
---find-links=https://girder.github.io/large_image_wheels GDAL
+--find-links=https://girder.github.io/large_image_wheels
+GDAL
 git+https://github.com/Hung-HsienWan/geemap.git@main
 localtileserver
 scikit-learn
