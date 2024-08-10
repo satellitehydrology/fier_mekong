@@ -14,11 +14,6 @@ from PIL import Image
 # from osgeo import gdal
 
 import rioxarray as rio
-'''
-if os.path.isfile('/home/adminuser/venv/lib/python3.9/site-packages/geemap/common.py'):
-    os.remove('/home/adminuser/venv/lib/python3.9/site-packages/geemap/common.py')
-shutil.copy2('common.py','/home/adminuser/venv/lib/python3.9/site-packages/geemap/common.py')
-'''
 import geemap as gm
 import geemap.foliumap as geemap
 import ee
